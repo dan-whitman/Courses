@@ -1,4 +1,4 @@
-# FPVDrone
+# Mid-Final Project
 Pydrake simulation files for FPV Drone for MAE 5810 project.
 
 ## IMPLEMENTATION:
