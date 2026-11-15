@@ -118,7 +118,6 @@ if __name__ == '__main__':
     # figs = [fig_temp_w_t0, fig_temp_u_t0, fig_temp_w_tf, fig_temp_u_tf] # figures
     # fig_names = [fig_temp_w_t0_name, fig_temp_u_t0_name, fig_temp_w_tf_name, fig_temp_u_tf_name] # figure names
 
-
     ##### SAVING AND DISPLAYING RESULTS
     PrintInit() # initial printing preparation
     PrintGraph() # printing graph information
