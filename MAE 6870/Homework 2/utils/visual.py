@@ -124,7 +124,6 @@ def VisualErrorGrid(grid_temp: np.array, grid_temp_real: np.array, grid_shared: 
     fig_error.tight_layout()
     return fig_error, fig_name
 
-
 ##### VISUALIZE CELL Xij FUNCTION (inputs robot temperatures over time and desired cell coordinates ij for plotting)
 def VisualXij(robot_temperatures: list, grid_centralized: np.array, coord_cell: tuple, fig_name: str) -> tuple[plt.Figure, str]:
     # creating figure
