@@ -6,7 +6,7 @@ import copy
 from utils.measure import MeasureCell, MeasureMSE
 
 ##### CONSENSUS SIMULATION FUNCTION (inputs all robot measurements and performes K steps of consensus)
-def SimulateConsensus(robot_measures_w: list, robot_measures_u: list, W: np.array, K: float) -> tuple[list, list]:
+def SimulateConsensus(robot_measures_w: list, robot_measures_u: list, W: np.ndarray, K: float) -> tuple[list, list]:
     # constructing initial sets
     robot_consensuses_w = [] # empty consensus step set
     robot_consensuses_u = [] # empty consensus step set
@@ -73,7 +73,7 @@ def SimulateTemperatues(robot_consensuses_w: list, robot_consensuses_u: list) ->
     return robot_temperatures_w, robot_temperatures_u
 
 ##### SIMULATE INITIAL MEASURMENT FUNCTION (constructs initial zero filled lists for robot prior measurements)
-def SimulateInitMeasure(grid_temp: np.array, vars_robot: tuple) -> list:
+def SimulateInitMeasure(grid_temp: np.ndarray, vars_robot: tuple) -> list:
     # initial empty set
     robot_measures_prev = [] # empty measurements set
 
@@ -91,7 +91,7 @@ def SimulateInitMeasure(grid_temp: np.array, vars_robot: tuple) -> list:
     return robot_measures_prev
 
 ##### SINGLE MEASUREMENT SIMULATION FUNCTION (inputs temperature grid, cell sets, robot variances, and consensus steps and returns estimated grids for each robot)
-def SimulateSingle(grid_temp_real: np.array, W: np.array, cell_sets: list, vars_robot: tuple, K: float, robot_measures_prev_w: list, robot_measures_prev_u: list) -> tuple[list, list, list]:
+def SimulateSingle(grid_temp_real: np.ndarray, W: np.ndarray, cell_sets: list, vars_robot: tuple, K: float, robot_measures_prev_w: list, robot_measures_prev_u: list) -> tuple[list, list, list]:
     # constructing initial sets
     robot_measures_w = [] # empty measurements set
     robot_measures_u = [] # empty measurements set
@@ -140,7 +140,7 @@ def SimulateSingle(grid_temp_real: np.array, W: np.array, cell_sets: list, vars_
     return robot_consensuses_w, robot_consensuses_u, raw_measures
 
 ##### MSE TRIAL FUNCTION (performs trial to compute MSE over trials, returns averaged MSE metrics and final temperature grid for plotting)
-def SimulateMSETrials(grid_temp_real: np.array, W: np.array, cell_sets: list, vars_robot: tuple, K: float, M: float, grid_shared: np.array, robot_measures_prev_w: list, robot_measures_prev_u: list) -> tuple[tuple, tuple, tuple, np.array, np.array]:
+def SimulateMSETrials(grid_temp_real: np.ndarray, W: np.ndarray, cell_sets: list, vars_robot: tuple, K: float, M: float, grid_shared: np.ndarray, robot_measures_prev_w: list, robot_measures_prev_u: list) -> tuple[tuple, tuple, tuple, np.ndarray, np.ndarray]:
     # initialize values
     MSE_all_avg_w = 0 # total grid MSE
     MSE_all_avg_u = 0 # total grid MSE
@@ -178,7 +178,7 @@ def SimulateMSETrials(grid_temp_real: np.array, W: np.array, cell_sets: list, va
     return (MSE_all_avg_w, MSE_all_avg_u), (MSE_shared_avg_w, MSE_shared_avg_u), (RMSE_shared_avg_w, RMSE_shared_avg_u), robot_consensus_final_w, robot_consensus_final_u, robot_temperature_final_w, robot_temperature_final_u
 
 ##### SEQUENTIAL SIMULATION FUNCTION
-def SimulateSequential(grid_temp_real: np.array, W: np.array, cell_sets: tuple, vars_robot: tuple, K: float, M: float, grid_shared: np.array, t: float) -> tuple[list, list, list, list]:
+def SimulateSequential(grid_temp_real: np.ndarray, W: np.ndarray, cell_sets: tuple, vars_robot: tuple, K: float, M: float, grid_shared: np.ndarray, t: float) -> tuple[list, list, list, list]:
     # create initial arrays
     MSE_all_seq = []
     MSE_shared_seq = []

@@ -9,7 +9,7 @@ import numpy as np
 import config
 
 ##### GRAPH VISUALIZE FUNCTION (inputs adjacency matrix and visualizes the network graph)
-def VisualGraphNetwork(A: np.array, fig_name=str) -> tuple[plt.Figure, str]:
+def VisualGraphNetwork(A: np.ndarray, fig_name=str) -> tuple[plt.Figure, str]:
     # creating figure
     fig_graph = plt.figure('Graph Network', figsize=(7,5))
     fig_graph.suptitle('Graph Network Structure')
@@ -29,7 +29,7 @@ def VisualGraphNetwork(A: np.array, fig_name=str) -> tuple[plt.Figure, str]:
     return fig_graph, fig_name
 
 ##### TEMPERATURE GRID VISUALIZATION FUNCTION (inputs temperature grid and robot coordinates and creates plot)
-def VisualTempGrid(grid_temp: np.array, coords_robots: tuple, grid_shared: np.array, plt_name: str, fig_title: str, fig_name: str) -> tuple[plt.Figure, str]:
+def VisualTempGrid(grid_temp: np.ndarray, coords_robots: tuple, grid_shared: np.ndarray, plt_name: str, fig_title: str, fig_name: str) -> tuple[plt.Figure, str]:
     # creating figure
     fig_temp = plt.figure(plt_name, figsize=(7,5))
     fig_temp.suptitle(fig_title)
@@ -81,7 +81,7 @@ def VisualTempGrid(grid_temp: np.array, coords_robots: tuple, grid_shared: np.ar
     return fig_temp, fig_name
 
 ##### ERROR GRID VISUALIZATION FUNCTION (inputs grid and creates plots)
-def VisualErrorGrid(grid_temp: np.array, grid_temp_real: np.array, grid_shared: np.array, plt_name: str, fig_title: str, fig_name: str) -> tuple[plt.Figure, str]:
+def VisualErrorGrid(grid_temp: np.ndarray, grid_temp_real: np.ndarray, grid_shared: np.ndarray, plt_name: str, fig_title: str, fig_name: str) -> tuple[plt.Figure, str]:
     # creating figure
     fig_error = plt.figure(plt_name, figsize=(7,5))
     fig_error.suptitle(fig_title)
@@ -125,7 +125,7 @@ def VisualErrorGrid(grid_temp: np.array, grid_temp_real: np.array, grid_shared: 
     return fig_error, fig_name
 
 ##### VISUALIZE CELL Xij FUNCTION (inputs robot temperatures over time and desired cell coordinates ij for plotting)
-def VisualXij(robot_temperatures: list, grid_centralized: np.array, coord_cell: tuple, fig_name: str) -> tuple[plt.Figure, str]:
+def VisualXij(robot_temperatures: list, grid_centralized: np.ndarray, coord_cell: tuple, fig_name: str) -> tuple[plt.Figure, str]:
     # creating figure
     fig_xij = plt.figure(f'Cell X{coord_cell[0]}{coord_cell[1]}', figsize=(7,5))
     fig_xij.suptitle(fr'Consensus Convergence for $x_{{{coord_cell[0]}{coord_cell[1]}}}^{{(i)}}$')

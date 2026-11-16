@@ -5,7 +5,7 @@ import numpy as np
 import config
 
 ##### REAL TEMPERATURE FUNCTION (inputs grid and returns real temperature at each cell)
-def MeasureTempReal(grid: np.array) -> np.array:
+def MeasureTempReal(grid: np.ndarray) -> np.ndarray:
     # find grid size and flatten
     rows, cols = np.shape(grid)
     grid_flat = np.reshape(grid, -1)
@@ -24,7 +24,7 @@ def MeasureL2Dist(coords1: tuple, coords2: tuple) -> float:
     return np.linalg.norm(coords1 - coords2)
 
 ##### SENSING NEIGHBORHOOD FUNCTION (inputs robot coords and returns its neighborhood on grid)
-def MeasureSenseNeighborhood(coords_robot: tuple, grid: np.array) -> np.array:
+def MeasureSenseNeighborhood(coords_robot: tuple, grid: np.ndarray) -> np.ndarray:
     # find grid size
     rows, cols = np.shape(grid)
 
@@ -38,7 +38,7 @@ def MeasureSenseNeighborhood(coords_robot: tuple, grid: np.array) -> np.array:
     return np.reshape(grid_neighborhood, (rows,cols))
 
 ##### CELL MEASURE SET FUNCTION (inputs graph sense neighborhoods and returns all/number of robots that can measure each cell)
-def MeasureCellSet(neighborhoods_sense: list) -> tuple[list, np.array]:
+def MeasureCellSet(neighborhoods_sense: list) -> tuple[list, np.ndarray]:
     # find grid size and flatten all grids
     rows, cols = np.shape(neighborhoods_sense[0])
     neighborhoods_flat = [np.reshape(neighborhood_sense, -1) for neighborhood_sense in neighborhoods_sense]
@@ -66,7 +66,7 @@ def MeasureCell(theta: float, sigma: float) -> float:
     return theta + epsilon
 
 ##### MEASUREMENT ERROR FUNCTION (inputs temperature array for a robot and returns the maximum error value and index)
-def MeasureError(robot_temperature: np.array, grid_centralized: np.array) -> tuple[float, tuple]:
+def MeasureError(robot_temperature: np.ndarray, grid_centralized: np.ndarray) -> tuple[float, tuple]:
     # find difference across all cells
     error = np.abs(robot_temperature - grid_centralized) # error matrix
 
@@ -78,7 +78,7 @@ def MeasureError(robot_temperature: np.array, grid_centralized: np.array) -> tup
     return max_error, max_error_idx
 
 ##### CENTRALIZED FORMULA MEASUREMENT FUNCTION (inputs robot measurements and variances and outputs expected result for each cell)
-def MeasureCentralized(raw_measures: list, vars_robot: tuple, cell_sets: list) -> np.array:
+def MeasureCentralized(raw_measures: list, vars_robot: tuple, cell_sets: list) -> np.ndarray:
     ## find size of grid and initialize
     rows, cols = np.shape(raw_measures[0])
     grid_centralized = np.zeros((rows, cols)) # centralized grid
@@ -97,7 +97,7 @@ def MeasureCentralized(raw_measures: list, vars_robot: tuple, cell_sets: list) -
     return grid_centralized
 
 ##### SHARED SENSING MEASUREMENT FUNCTION (inputs sensing neighborhoods/cell sets and returns all cells shared with desired robot)
-def MeasureSharedCells(cell_sets: list, neighborhood_sense: np.array) -> np.array:
+def MeasureSharedCells(cell_sets: list, neighborhood_sense: np.ndarray) -> np.ndarray:
     # constructing initial shared region
     grid_shared = np.zeros(np.shape(neighborhood_sense))
 
@@ -112,7 +112,7 @@ def MeasureSharedCells(cell_sets: list, neighborhood_sense: np.array) -> np.arra
     return grid_shared
 
 ##### MSE MEASUREMENT FUNCTION (inputs estimated temperatures and true temperatures and returns MSE for each cell and for desired region)
-def MeasureMSE(robot_temperature: np.array, grid_temp_real: np.array, grid_shared: np.array) -> tuple[float, float, float]:
+def MeasureMSE(robot_temperature: np.ndarray, grid_temp_real: np.ndarray, grid_shared: np.ndarray) -> tuple[float, float, float]:
     # computing MSE of grid
     grid_MSE = (robot_temperature - grid_temp_real) ** 2 # total region
     grid_MSE_shared = grid_MSE * grid_shared # shared region

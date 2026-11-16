@@ -26,7 +26,7 @@ def GraphCommNeighborhood(coords_robots: tuple) -> tuple[list, list]:
     return neighborhoods_comm, comm_degrees
 
 ##### GRAPH ADJACENCY FUNCTION (inputs robot coordinates and returns graph adjacency matrix)
-def GraphAdjacency(coords_robots: tuple) -> np.array:
+def GraphAdjacency(coords_robots: tuple) -> np.ndarray:
     # finding robot neighborhoods
     comm_neighbors, _ = GraphCommNeighborhood(coords_robots=coords_robots)
 
@@ -41,13 +41,13 @@ def GraphAdjacency(coords_robots: tuple) -> np.array:
     return A
 
 ##### GRAPH IN-DEGREE FUNCTION (inputs adjacency matrix A and returns in-degree matrix and vector)
-def GraphInDegree(A: np.array) -> tuple[np.array, np.array]:
+def GraphInDegree(A: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     # finding in-degree
     d = np.sum(A, axis=1) # sum of each row
     return np.diag(d), d # diagonal matrix and d
 
 ##### GRAPH METROPOLIS FUNCTION (inputs robot coordinates and returns graph metropolis weight matrix and eigenvalues)
-def GraphMetropolis(coords_robots: tuple) -> tuple[np.array, np.array]:
+def GraphMetropolis(coords_robots: tuple) -> tuple[np.ndarray, np.ndarray]:
     # finding robot neighborhoods and degree
     neighborhoods_comm, comm_degrees = GraphCommNeighborhood(coords_robots=coords_robots)
 
