@@ -1,5 +1,5 @@
 ##### CONFIG
-# must run the following in terminal OR include in ~/.bashrc to establish pydrake environment variables:
+# must run the following in terminal to establish pydrake environment variables OR add to ~./bashrc:
 '''
 export PATH="/opt/drake/bin${PATH:+:${PATH}}"
 export PYTHONPATH="/opt/drake/lib/python$(python3 -c 'import sys; print("{0}.{1}".format(*sys.version_info))')/site-packages${PYTHONPATH:+:${PYTHONPATH}}"
