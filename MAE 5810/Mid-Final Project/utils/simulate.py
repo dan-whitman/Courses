@@ -26,6 +26,7 @@ def SimDiagram(closed_diagram: Diagram) -> Diagram:
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='drone_state'), name='drone_state') # for printing/tracking hexrotor state
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='target_state'), name='target_state') # for printing tracking target state
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='propeller_thrusts'), name='propeller_thrusts') # for printing/tracking propeller thrusts
+    sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='target_estimate_state'), name='target_estimate_state') # drone estimate of target state
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='frame_image'), name='frame_image') # for creating cv2 video
 
     # complete diagram
@@ -71,6 +72,7 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
         x = sim_diagram.GetOutputPort(port_name='drone_state').Eval(sim_context) # evaluate drone state
         xT = sim_diagram.GetOutputPort(port_name='target_state').Eval(sim_context) # evaluate target state
         u = sim_diagram.GetOutputPort(port_name='propeller_thrusts').Eval(sim_context) # evaluate propeller thrusts
+        xTe = sim_diagram.GetOutputPort(port_name='target_estimate_state').Eval(sim_context) # evaluate estimated target state
         image = sim_diagram.GetOutputPort(port_name='frame_image').Eval(sim_context) # get camera frame image
 
         # DO STUFF HERE (LOG DATA AND ADD FRAME TO CV2 VIDEO

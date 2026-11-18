@@ -4,10 +4,18 @@ from pydrake.systems.sensors import CameraConfig
 
 ##### OTHER IMPORTS
 import numpy as np
+import cv2
 
 ##### CAMERA SYSTEM DEFINITION (LeafSystem for camera)
 class CameraSystem(LeafSystem):
     # shared variables
+
+    # inputs raw color image, raw depth image, and uses openCV to find bounding box for target centroid
+        # inputs as AbstractInputPorts
+    # then computes estimated target position in world and uses that to determine drone reference (VectorOutputPort)
+        # need to define config drone reference offset from target
+        # for testing ignore all image stuff and just directly pass in target state (VectorInputPort) and export desired drone state, see if works
+    # add output port for estimated target state (target_estimate_state) can be VectorOutputPort
 
     pass
 
