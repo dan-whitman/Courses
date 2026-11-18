@@ -15,7 +15,7 @@ from utils.visual import VisualPlantSceneFrames
 from utils.xacro import XacroToURDF
 
 ##### DRONE PLANT FUNCTION (creates hexrotor plant/scene graph objects)
-def DronePlantScene(builder: DiagramBuilder, time_step: float) -> tuple[MultibodyPlant, SceneGraph]:
+def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool) -> tuple[MultibodyPlant, SceneGraph]:
     print(f'\n=====CREATING DRONE PLANT=====')
 
     # creating the plant and scene graph
@@ -40,10 +40,10 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float) -> tuple[Multibod
 
     # adding models to plant
     Drone = XacroToURDF(str(config.MOD_DIR / 'FPVDrone.urdf.xacro'))
-    Target = XacroToURDF(str(config.MOD_DIR / 'Target.urdf.xacro'))
+    if with_camera: Target = XacroToURDF(str(config.MOD_DIR / 'Target.urdf.xacro')) # only add target for complete plant
 
     config.drone_instance = parser.AddModelsFromString(file_contents=Drone, file_type='urdf')[0]
-    config.target_instance = parser.AddModelsFromString(file_contents=Target, file_type='urdf')[0]
+    if with_camera: config.target_instance = parser.AddModelsFromString(file_contents=Target, file_type='urdf')[0] # only add target for complete plant
 
     # configuring dynamics to rpy representation
     plant.SetBaseBodyJointType(joint_type=BaseBodyJointType.kRpyFloatingJoint)
@@ -106,21 +106,22 @@ def DroneCamera(builder: DiagramBuilder, plant: MultibodyPlant, scene_graph: Sce
     ApplyCameraConfig(config=camera_config, builder=builder, plant=plant, scene_graph=scene_graph)
 
 ##### Drone DIAGRAM FUNCTION (creates open-loop hexrotor diagram)
-def DroneDiagram() -> Diagram:
+def DroneDiagram(with_camera: bool) -> Diagram:
     print(f'\n=====CREATING DRONE DIAGRAM=====')
 
     # initiating the builder
     open_builder = DiagramBuilder()
 
     # creating plant and scene graph
-    plant, scene_graph = DronePlantScene(builder=open_builder, time_step=0.0)
+    plant, scene_graph = DronePlantScene(builder=open_builder, time_step=0.0, with_camera=with_camera)
 
     # creating the propellers
     propellers = open_builder.AddNamedSystem(name='propellers', system=DronePropellers(plant=plant))
 
     # creating the camera
-    DroneCamera(builder=open_builder, plant=plant, scene_graph=scene_graph)
-    camera = open_builder.GetSubsystemByName(name='rgbd_sensor_drone_camera')
+    if with_camera:
+        DroneCamera(builder=open_builder, plant=plant, scene_graph=scene_graph)
+        camera = open_builder.GetSubsystemByName(name='rgbd_sensor_drone_camera')
 
     # extracting constants
     config.q_num = plant.num_positions(model_instance=config.drone_instance) # number of state coordinates
@@ -135,16 +136,17 @@ def DroneDiagram() -> Diagram:
     open_builder.ExportInput(input=propellers.get_command_input_port(), name='propeller_thrusts') # propeller inputs
     
     open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.drone_instance), name='drone_state') # drone output
-    open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.target_instance), name='target_state') # target output
-    open_builder.ExportOutput(output=camera.color_image_output_port(), name='color_image') # camera color image
-    open_builder.ExportOutput(output=camera.depth_image_32F_output_port(), name='depth_image') # camera depth image
     open_builder.ExportOutput(output=scene_graph.get_query_output_port(), name='geometry_query') # geometry output
+    if with_camera:
+        open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.target_instance), name='target_state') # target output
+        open_builder.ExportOutput(output=camera.color_image_output_port(), name='color_image') # camera color image
+        open_builder.ExportOutput(output=camera.depth_image_32F_output_port(), name='depth_image') # camera depth image
 
     # complete diagram
     return open_builder.Build()
 
 ##### DRONE INITIAL CONTEXT FUNCTION (creates initial context for diagram)
-def DroneInitialContext(open_diagram: Diagram) -> Context:
+def DroneInitialContext(open_diagram: Diagram, with_camera: bool) -> Context:
     print(f'\n=====CREATING DRONE INITIAL CONTEXT=====')
 
     # creating contexts
@@ -159,10 +161,11 @@ def DroneInitialContext(open_diagram: Diagram) -> Context:
     X_WR = RigidTransform(rpy=config.drone_initial_rpy, p=config.drone_initial_position) # target transform
     plant.SetFreeBodyPose(context=plant_context, body=drone_body, X_JpJc=X_WR) # placing hexrotor
 
-    # placing the target
-    target_body = plant.GetBodyByName(name='target_base')
-    X_WT = RigidTransform(rpy=config.target_initial_rpy, p=config.target_initial_position) # target transform
-    plant.SetFreeBodyPose(context=plant_context, body=target_body, X_JpJc=X_WT) # placing target
+    # placing the target (only for complete plant)
+    if with_camera:
+        target_body = plant.GetBodyByName(name='target_base')
+        X_WT = RigidTransform(rpy=config.target_initial_rpy, p=config.target_initial_position) # target transform
+        plant.SetFreeBodyPose(context=plant_context, body=target_body, X_JpJc=X_WT) # placing target
 
     # defining initial propeller thrusts
     prop_thrust = 1.00 * config.g_mag * config.drone_mass / config.u_num # splitting thurst over all props
