@@ -10,6 +10,7 @@ export PYTHONPATH="/opt/drake/lib/python$(python3 -c 'import sys; print("{0}.{1}
 
 ##### OTHER IMPORTS
 import numpy as np
+from pathlib import Path
 
 ##### SELF-DEFINED IMPORTS
 import inputs.config as config
@@ -26,6 +27,26 @@ from utils.print import PrintCamera
 ##### SCRIPT INITIALIZATION FUNCTION (initializes commands and config args)
 def ScriptInit() -> None:
     print(f'\n=====INITIALIZING SCRIPT=====')
+
+    # making directories
+    config.LOC_DIR = Path(__file__).resolve().parent # resolve current directory
+
+    # updating config paths (NEED TO UPDATE EVERY TIME MAKE NEW DIRECTORY)
+    config.INP_DIR = config.LOC_DIR / config.INP_DIR # inputs directory
+    config.MOD_DIR = config.LOC_DIR / config.MOD_DIR # model directory
+    config.UTI_DIR = config.LOC_DIR / config.UTI_DIR # utils directory
+    config.VID_DIR = config.LOC_DIR / config.VID_DIR # video directory
+    config.FIG_DIR = config.LOC_DIR / config.FIG_DIR # figure directory
+    config.DAT_DIR = config.LOC_DIR / config.DAT_DIR # data directory
+
+    config.ALL_DIR = ( # combined directory list (NEED TO UPDATE EVERY TIME MAKE NEW DIRECTORY)
+        config.INP_DIR,
+        config.MOD_DIR,
+        config.UTI_DIR,
+        config.VID_DIR,
+        config.FIG_DIR,
+        config.DAT_DIR,
+    )
 
     # making directories
     for DIR in config.ALL_DIR: # for each directory

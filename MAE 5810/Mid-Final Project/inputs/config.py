@@ -72,7 +72,8 @@ VID_DIR = Path('vids') # video directory
 FIG_DIR = Path('figs') # figure directory
 DAT_DIR = Path('data') # data directory
 
-ALL_DIR = (INP_DIR, MOD_DIR, UTI_DIR, VID_DIR, FIG_DIR, DAT_DIR) # directory tuple
+LOC_DIR = None # local script execution directory
+ALL_DIR = None # all directories
 
 ##### STORED GLOBAL PARAMETERS
 args = None # empty parser arguments
