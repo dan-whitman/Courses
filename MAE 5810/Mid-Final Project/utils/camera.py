@@ -19,6 +19,7 @@ class CameraSystem(LeafSystem):
     # add output for frame image (the one with the bounding box and placed target stuff from CameraMeasure)? (AbstractOutputPort)
     # add output ports for both true pixel camera measurements (u,v) and estimated from bounding box (VectorOutputPorts)
     # move camera measure into class function defintion
+    # stores last measured target state until new measurment (so drone only follows last known to update reference_state)
 
     pass
 
