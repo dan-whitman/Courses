@@ -15,11 +15,11 @@ import numpy as np
 import inputs.config as config
 from utils.system import DroneDiagram, DroneInitialContext
 from utils.control import ControlLQRDiagram, ControlDiagram, ControlContext
+from utils.camera import CameraDiagram
 from utils.simulate import SimDiagram, SimContext, SimRun
 from utils.visual import VisualHold
 from utils.print import PrintCamera
 
-# from utils.camera import CameraMeasure
 # from utils.figure import PlotData
 # from utils.video import WriteVideoText, WriteVideoPoint
 
