@@ -17,6 +17,8 @@ class CameraSystem(LeafSystem):
         # for testing ignore all image stuff and just directly pass in target state (VectorInputPort) and export desired drone state, see if works
     # add output port for estimated target state (target_estimate_state) can be VectorOutputPort
     # add output for frame image (the one with the bounding box and placed target stuff from CameraMeasure)? (AbstractOutputPort)
+    # add output ports for both true pixel camera measurements (u,v) and estimated from bounding box (VectorOutputPorts)
+    # move camera measure into class function defintion
 
     pass
 
