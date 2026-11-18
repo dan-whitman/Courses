@@ -27,3 +27,34 @@ def VisualPlantSceneFrames(plant: MultibodyPlant, scene_graph: SceneGraph) -> tu
             )
 
     return plant, scene_graph # return updated plant and scene graph
+
+##### VISUALIZER INITIALIZATION FUNCTION (initializes meshcat and updates builder)
+def VisualInit(builder: DiagramBuilder, query_object_port: OutputPort) -> tuple[DiagramBuilder, MeshcatVisualizer]:
+    print(f'\n=====INITIALIZING VISUALIZER=====')
+
+    config.meshcat = StartMeshcat() # initialize meshcat
+
+    # adding visualizer to builder
+    visualizer = MeshcatVisualizer.AddToBuilder(
+        builder=builder, query_object_port=query_object_port, meshcat=config.meshcat, params=MeshcatVisualizerParams()
+    )
+
+    # returning updated builder and visualizer
+    return builder, visualizer
+
+##### VISUALIZER START FUNCTION (begins meshcat recording)
+def VisualStart() -> None:
+    print(f'\n=====STARTING VISUALIZATION=====')
+
+    config.meshcat.StartRecording(set_visualizations_while_recording=True) # begin recording
+
+##### VISUALIZER STOP FUNCTION (stops and published meshcat recording)
+def VisualStop() -> None:
+    print(f'\n=====STOPPING VISUALIZATION=====')
+
+    config.meshcat.StopRecording() # stop simulation
+    config.meshcat.PublishRecording() # publish simulation
+
+##### VISUALIZER HOLD FUNCTION (keeps visualizer open after simulation)
+def VisualHold() -> None:
+    input(f'\n=====KEEPING MESHCAT ALIVE=====\n')

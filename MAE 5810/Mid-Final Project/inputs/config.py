@@ -17,7 +17,7 @@ camera_fps = 15 # (fps)
 camera_fx = 500 # (px)
 camera_fy = 500 # (px)
 
-simulation_duration = 5.0 # (s)
+simulation_duration = 15.0 # (s)
 simulation_rate = 3.0 # ()
 
 frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
@@ -91,3 +91,5 @@ u0 = None # (N) reference equilibrium propeller thrusts
 target_instance = None # target plant index for reference
 
 camera_info = None # camera infomration
+
+meshcat = None # meshcat instance

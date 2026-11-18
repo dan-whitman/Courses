@@ -10,12 +10,13 @@ export PYTHONPATH="/opt/drake/lib/python$(python3 -c 'import sys; print("{0}.{1}
 
 ##### OTHER IMPORTS
 import numpy as np
-import cv2
 
 ##### SELF-DEFINED IMPORTS
 import inputs.config as config
 from utils.system import DroneDiagram, DroneInitialContext
 from utils.control import ControlLQRDiagram, ControlDiagram, ControlContext
+from utils.simulate import SimDiagram, SimContext, SimRun
+from utils.visual import VisualHold
 
 from utils.camera import CameraMeasure
 from utils.figure import PlotData
@@ -49,24 +50,16 @@ if __name__ == '__main__':
 
     # creating simulation system
 
+    # printing system information
+
+    # exporting data
+    
+    # holding visualization open
+    if config.argss.visual == 1: VisualHold()
+
+    print(f'=====CLOSING SCRIPT=====')
 
 
-##### RUNNING SIMULATION
-print(f'\n=====BEGINNING SIMULATION=====')
-meshcat.StartRecording(set_visualizations_while_recording=True) # begin recording
-
-simulator = Simulator(system=diagram, context=context)
-simulator.Initialize()
-simulator.set_target_realtime_rate(1.0)
-
-
-camera = diagram.GetSubsystemByName('rgbd_sensor_drone_camera') # getting camera
-
-# making video output
-if args.video == 1: # if outputting video
-    video = cv2.VideoWriter(
-        filename=str(VID_DIR / vid_file_name), apiPreference=0, fourcc=cv2.VideoWriter_fourcc(*'MJPG'), fps=camera_fps, frameSize=(camera_width, camera_height)
-    )
 
 # data values
 times = []
@@ -143,9 +136,6 @@ drone_w_velocities = np.array(drone_w_velocities)
 us = np.array(us)
 vs = np.array(vs)
 
-# ending simulation
-meshcat.StopRecording()
-meshcat.PublishRecording() # watch simulation
 
 ##### OUTPUTTING DATA
 print(f'\n=====SAVING RESULTS=====')

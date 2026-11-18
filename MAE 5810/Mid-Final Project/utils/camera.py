@@ -1,8 +1,13 @@
 ##### PYDRAKE IMPORTS
+from pydrake.systems.framework import LeafSystem
 from pydrake.systems.sensors import CameraConfig
 
 ##### OTHER IMPORTS
 import numpy as np
+
+##### CAMERA SYSTEM DEFINITION (LeafSystem for camera)
+class CameraSystem(LeafSystem):
+    
 
 ##### CAMERA MODEL FUNCTION (inputs camera config, camera transform, and target state and returns measured pixel output)
 def CameraMeasure(config: CameraConfig, X_CW: np.array, x_T: np.array) -> tuple:
