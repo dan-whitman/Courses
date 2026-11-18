@@ -15,7 +15,8 @@ import cv2
 ##### SELF-DEFINED IMPORTS
 import inputs.config as config
 from utils.system import DroneDiagram, DroneInitialContext
-from utils.xacro import XacroToURDF
+from utils.control import ControlLQRDiagram, ControlDiagram, ControlContext
+
 from utils.camera import CameraMeasure
 from utils.figure import PlotData
 from utils.video import WriteVideoText, WriteVideoPoint
@@ -39,7 +40,12 @@ if __name__ == '__main__':
     open_diagram = DroneDiagram() # creating open-loop diagram
     initial_context = DroneInitialContext(open_diagram=open_diagram) # define open-loop initial context
 
-    # creating closed-loop control system (NEED TO ADD CAMERA IN HERE SO CAN FEED x0 INTO??? HOW TO READ CAMERA OUTPUT, USE LEAF SYSTEM?)
+    # creating closed-loop control system (CREATE CAMERA DIAGRAM FOR PROCESSING AND CONTROLLER DIAGRAM)
+    control_diagram = ControlLQRDiagram(open_diagram=open_diagram, initial_context=initial_context) # create lqr controller
+    camera_diagram = # create camera diagram
+
+    closed_diagram = ControlDiagram(open_diagram=open_diagram, control_diagram=control_diagram, camera_diagram=camera_diagram) # create closed-loop diagram
+    closed_context = ControlContext(closed_diagram=closed_diagram, initial_context=initial_context) # create closed-loop context
 
     # creating simulation system
 
@@ -53,8 +59,6 @@ simulator = Simulator(system=diagram, context=context)
 simulator.Initialize()
 simulator.set_target_realtime_rate(1.0)
 
-frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
-# num_frames = len(frame_times)
 
 camera = diagram.GetSubsystemByName('rgbd_sensor_drone_camera') # getting camera
 

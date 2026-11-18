@@ -101,11 +101,11 @@ def DroneCamera(builder: DiagramBuilder, plant: MultibodyPlant, scene_graph: Sce
 
     # save camera information globally
     config.camera_info = CameraInfo(
-        wisth=camera_config.width, height=camera_config.height, focal_x=camera_config.focal_x(), focal_y=camera_config.focal_y(), center_x=camera_config.principal_point()[0], center_y=camera_config.principal_point()[1]
+        width=camera_config.width, height=camera_config.height, focal_x=camera_config.focal_x(), focal_y=camera_config.focal_y(), center_x=camera_config.principal_point()[0], center_y=camera_config.principal_point()[1]
     )
 
     # apply camera to builder
-    ApplyCameraConfig(config=camera_config, builder=builder, scene_graph=scene_graph)
+    ApplyCameraConfig(config=camera_config, builder=builder, plant=plant, scene_graph=scene_graph)
 
 ##### Drone DIAGRAM FUNCTION (creates open-loop hexrotor diagram)
 def DroneDiagram() -> Diagram:
@@ -122,6 +122,7 @@ def DroneDiagram() -> Diagram:
 
     # creating the camera
     DroneCamera(builder=open_builder, plant=plant, scene_graph=scene_graph)
+    camera = open_builder.GetSubsystemByName(name='rgbd_sensor_drone_camera')
 
     # extracting constants
     config.q_num = plant.num_positions(model_instance=config.drone_instance) # number of state coordinates
@@ -137,6 +138,8 @@ def DroneDiagram() -> Diagram:
     
     open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.drone_instance), name='drone_state') # drone output
     open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.target_instance), name='target_state') # target output
+    open_builder.ExportOutput(output=camera.color_image_output_port(), name='color_image') # camera color image
+    open_builder.ExportOutput(output=camera.depth_image_32F_output_port(), name='depth_image') # camera depth image
     open_builder.ExportOutput(output=scene_graph.get_query_output_port(), name='geometry_query') # geometry output
 
     # complete diagram
@@ -165,9 +168,9 @@ def DroneInitialContext(open_diagram: Diagram) -> Context:
 
     # defining initial propeller thrusts
     prop_thrust = 1.00 * config.g_mag * config.drone_mass / config.u_num # splitting thurst over all props
-    u_initial = np.full(config.u_num, prop_thrust) # setting control
+    config.u0 = np.full(config.u_num, prop_thrust) # setting control
 
-    open_diagram.GetInputPort(port_name='propeller_thrusts').FixValue(context=initial_context, value=u_initial) # drone thrusts
+    open_diagram.GetInputPort(port_name='propeller_thrusts').FixValue(context=initial_context, value=config.u0) # drone thrusts
 
     # return context
     return initial_context

@@ -1,0 +1,130 @@
+##### PYDRAKE IMPORTS
+from pydrake.systems.framework import DiagramBuilder, Diagram, Context, LeafSystem, BasicVector
+from pydrake.systems.controllers import LinearQuadraticRegulator
+from pydrake.systems.primitives import AffineSystem, FirstOrderTaylorApproximation
+
+##### OTHER IMPORTS
+import numpy as np
+
+##### SELF_DEFINED IMPORTS
+import inputs.config as config
+
+##### LQR SYSTEM DEFINITION (LeafSystem for LQR controller)
+class ControlLQRSystem(LeafSystem):
+    # shared variables
+
+    # initialization
+    def __init__(self, affine_system: AffineSystem, Q: np.ndarray, R: np.ndarray, N: np.ndarray, u0: np.ndarray):
+        print(f'\n=====CREATING LQR SYSTEM=====')
+        super().__init__() # initializing the system C++ wrapper
+
+        # assigning system variables
+        self.affine_system = affine_system # assign hexrotor diagram
+
+        self.Q = Q # assign Q matrix
+        self.R = R # assign R matrix
+        self.N = N # assign N matrix
+
+        self.x0 = None # stored reference state
+        self.u0 = u0 # stored reference thrusts
+
+        # determining LQR gain
+        self.K, _ = LinearQuadraticRegulator(A=affine_system.A(), B=affine_system.B(), Q=self.Q, R=self.R, N=self.N)
+
+        # declaring internal states
+
+        # declaring ports
+        self.drone_state_port = self.DeclareVectorInputPort(name='drone_state', size=config.q_num + config.v_num) # drone state input
+        self.reference_state_port = self.DeclareVectorInputPort(name='reference_state', size = config.q_num + config.v_num) # desired drone state reference input
+
+        self.propeller_thrusts_port = self.DeclareVectorOutputPort(name='propeller_thrusts', size=config.u_num, calc=self.UpdateThrusts)
+
+    # update thrusts function
+    def UpdateThrusts(self, context: Context, output: BasicVector):
+        # read current state from context
+        x = self.drone_state_port.Eval(context)
+        x0 = self.reference_state_port.Eval(context)
+
+        u = self.u0 - self.K @ (x - x0) # calculate new thrusts
+
+        output.SetFromVector(value=u) # set new thrusts
+
+##### LQR DIAGRAM FUNCTION (creates LQR diagram block for given system)
+def ControlLQRDiagram(open_diagram: Diagram, initial_context: Context) -> Diagram:
+    print(f'\n=====CREATING LQR DIAGRAM=====')
+
+    # initialing the builder 
+    lqr_builder = DiagramBuilder()
+
+    # creating LQR gain matrices
+    Q = np.ones(config.q_num + config.v_num) # Q matrix gain vector
+    Q[:3] = config.lqr_rpy_gains # orientation gains
+    Q[3:6] = config.lqr_pos_gains # position gains
+    Q[config.q_num:config.q_num + 3] = config.lqr_rot_vel_gains # rotation velocity gains
+    Q[config.q_num + 3:] = config.lqr_pos_vel_gains # linear velocity gains
+
+    R = np.full(config.u_num, config.lqr_thrust_gains) # R matrix gain vector
+
+    N = np.zeros((config.q_num + config.v_num, config.u_num)) # N matrix gain
+
+    Q = np.diag(Q) # diagonalize Q vector
+    R = np.diag(R) # diagonalize R vector
+
+    # linearizing the system
+    affine_sytsem = FirstOrderTaylorApproximation(system=open_diagram, context=initial_context)
+
+    # adding in LQR controller
+    lqr = lqr_builder.AddNamedSystem(name='lqr', system=ControlLQRSystem(affine_system=affine_sytsem, Q=Q, R=R, N=N, u0=config.u0))
+
+    # exposing ports
+    lqr_builder.ExportInput(input=lqr.GetInputPort(port_name='drone_state'), name='drone_state')
+    lqr_builder.ExportInput(input=lqr.GetInputPort(port_name='reference_state'), name='reference_state')
+
+    lqr_builder.ExportOutput(output=lqr.GetOutputPort(port_name='propeller_thrusts'), name='propeller_thrusts')
+
+    # complete diagram
+    return lqr_builder.Build()
+
+##### CONTROL DIAGRAM FUNCTION (creates closed-loop diagram from open-loop, control, and camera diagram)
+def ControlDiagram(open_diagram: Diagram, control_diagram: Diagram, camera_diagram: Diagram) -> Diagram:
+    print(f'\n=====CREATING CONTROL DIAGRAM=====')
+
+    # initiating the builder
+    closed_builder = DiagramBuilder()
+
+    # adding subsystems
+    closed_builder.AddNamedSystem(name='open_diagram', system=open_diagram) # open-loop system
+    closed_builder.AddNamedSystem(name='control_diagram', system=control_diagram) # control diagram
+    closed_builder.AddNamedSystem(name='camera_diagram', system=camera_diagram) # camera diagram
+
+    # wiring the systems together
+    closed_builder.Connect(open_diagram.GetOutputPort(port_name='drone_state'), control_diagram.GetInputPort(port_name='drone_state'))
+    closed_builder.Connect(camera_diagram.GetOutputPort(port_name='reference_state'), control_diagram.GetInputPort(port_name='reference_state'))
+    closed_builder.Connect(control_diagram.GetOutputPort(port_name='propeller_thrusts'), open_diagram.GetInputPort(port_name='propeller_thrusts'))
+
+    # exposing ports
+    closed_builder.ExportOutput(name='geometry_query', output=open_diagram.GetOutputPort(port_name='geometry_query')) # for visualization
+    closed_builder.ExportOutput(name='drone_state', output=open_diagram.GetOutputPort(port_name='drone_state')) # for printing/tracking hexrotor state
+    closed_builder.ExportOutput(name='propeller_thrusts', output=control_diagram.GetOutputPort(port_name='propeller_thrusts')) # for printing/tracking peopeller thrusts
+
+    # complete diagram
+    return closed_builder.Build() 
+
+##### CONTROLLER CONTEXT FUNCTION (creates closed-loop context from diagram)
+def ControlContext(closed_diagram: Diagram, initial_context: Context) -> Context:
+    print(f'\n=====CREATING CONTROLLER CONTEXT=====')
+
+    # creating contexts
+    closed_context = closed_diagram.CreateDefaultContext() # creating numerical context
+    open_diagram = closed_diagram.GetSubsystemByName(name='open_diagram') # obtaining open-loop system
+    control_diagram = closed_diagram.GetSubsystemByName(name='control_diagram') # obtaining control diagram
+    camera_diagram = closed_diagram.GetSubsystemByName(name='camera_diagram') # obtaining camera diagram
+
+    closed_open_context = open_diagram.GetMyMutableContextFromRoot(root_context=closed_context)
+    closed_control_context = control_diagram.GetMyMutableContextFromRoot(root_context=closed_context)
+    closed_camera_context = camera_diagram.GetMyMutableContextFromRoot(root_context=closed_context)
+
+    closed_open_context.SetStateAndParametersFrom(source=initial_context)
+
+    # return context
+    return closed_context

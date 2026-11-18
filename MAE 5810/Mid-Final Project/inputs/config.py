@@ -20,6 +20,8 @@ camera_fy = 500 # (px)
 simulation_duration = 5.0 # (s)
 simulation_rate = 3.0 # ()
 
+frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
+
 drone_initial_position = np.array([0.0, 0.0, 0.5]) # (m)
 drone_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
 
@@ -83,6 +85,8 @@ u_num = None # number of control inputs
 
 drone_instance = None # drone plant index for reference
 drone_mass = None # (kg) drone mass
+
+u0 = None # (N) reference equilibrium propeller thrusts
 
 target_instance = None # target plant index for reference
 
