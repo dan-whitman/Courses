@@ -19,9 +19,9 @@ from utils.simulate import SimDiagram, SimContext, SimRun
 from utils.visual import VisualHold
 from utils.print import PrintCamera
 
-from utils.camera import CameraMeasure
-from utils.figure import PlotData
-from utils.video import WriteVideoText, WriteVideoPoint
+# from utils.camera import CameraMeasure
+# from utils.figure import PlotData
+# from utils.video import WriteVideoText, WriteVideoPoint
 
 ##### SCRIPT INITIALIZATION FUNCTION (initializes commands and config args)
 def ScriptInit() -> None:
