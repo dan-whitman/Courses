@@ -16,6 +16,7 @@ class CameraSystem(LeafSystem):
         # need to define config drone reference offset from target
         # for testing ignore all image stuff and just directly pass in target state (VectorInputPort) and export desired drone state, see if works
     # add output port for estimated target state (target_estimate_state) can be VectorOutputPort
+    # add output for frame image (the one with the bounding box and placed target stuff from CameraMeasure)? (AbstractOutputPort)
 
     pass
 
