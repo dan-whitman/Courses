@@ -17,6 +17,7 @@ from utils.system import DroneDiagram, DroneInitialContext
 from utils.control import ControlLQRDiagram, ControlDiagram, ControlContext
 from utils.simulate import SimDiagram, SimContext, SimRun
 from utils.visual import VisualHold
+from utils.print import PrintCamera
 
 from utils.camera import CameraMeasure
 from utils.figure import PlotData
@@ -49,8 +50,12 @@ if __name__ == '__main__':
     closed_context = ControlContext(closed_diagram=closed_diagram, initial_context=initial_context) # create closed-loop context
 
     # creating simulation system
+    sim_diagram = SimDiagram(closed_diagram=closed_diagram) # create final simulaton diagram
+    sim_context = SimContext(sim_diagram=sim_diagram, closed_context=closed_context) # define final simulation context
+    SimRun(sim_diagram=sim_diagram, sim_context=sim_context) # running the simulation
 
     # printing system information
+    PrintCamera()
 
     # exporting data
     
@@ -60,7 +65,7 @@ if __name__ == '__main__':
     print(f'=====CLOSING SCRIPT=====')
 
 
-
+'''
 # data values
 times = []
 camera_headings = []
@@ -143,14 +148,12 @@ print(f'\n=====SAVING RESULTS=====')
 # exporting video
 if args.video == 1: # if outputting video
     video.release() # save video
-    print('Video saved!')
 
 # exporting data
 if args.data == 1: # if outputting data
     np.savez(str(DAT_DIR / data_file_name), 
         times=times, drone_positions=drone_positions, drone_rpys=drone_rpys, drone_velocities=drone_velocities, drone_w_velocities=drone_w_velocities
     )
-    print('Data saved!')
 
 # plotting results
 if args.figures == 1: # if outputting figures
@@ -159,16 +162,4 @@ if args.figures == 1: # if outputting figures
 
     figheadings.savefig(str(FIG_DIR / heading_file_name), dpi=300, bbox_inches='tight')
     figtargetpixels.savefig(str(FIG_DIR / pixel_file_name), dpi=300, bbox_inches='tight')
-
-    print('Figures saved!')
-
-##### PRINTING INFO
-print(f'\n=====CAMERA INFO=====')
-print('fx:', config.focal_x())
-print('fy:', config.focal_y())
-print('ux:', config.principal_point()[0])
-print('uy:', config.principal_point()[1])
-print('Horizontal FOV:', np.degrees(camera_info.fov_x()), 'deg')
-print('Vertical FOV:', np.degrees(camera_info.fov_y()), 'deg')
-
-input(f'\nKeeping Meshcat alive!')
+'''

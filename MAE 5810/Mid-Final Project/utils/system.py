@@ -48,8 +48,6 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float) -> tuple[Multibod
     # configuring dynamics to rpy representation
     plant.SetBaseBodyJointType(joint_type=BaseBodyJointType.kRpyFloatingJoint)
 
-
-
     # adding visualization frames
     if config.args.frames: # if adding visual frames
         plant, scene_graph = VisualPlantSceneFrames(plant=plant, scene_graph=scene_graph)
