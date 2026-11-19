@@ -1,5 +1,5 @@
 ##### PYDRAKE IMPORTS
-from pydrake.systems.framework import LeafSystem, Context
+from pydrake.systems.framework import LeafSystem, Context, BasicVector
 from pydrake.systems.sensors import CameraConfig, ImageRgb8U, ImageDepth32F
 from pydrake.common.value import AbstractValue
 
@@ -50,6 +50,13 @@ class CameraSystem(LeafSystem):
     # update altered frame and references function
     def UpdateFrame(self, context: Context, abstract_state):
         pass
+
+    # update drone reference output function
+    def UpdateReference(self, context: Context, output: BasicVector):
+        pass
+
+    # state.get_mutable_abstract_state(int(self._traj_index))
+    # and .get_value()
 
     # inputs raw color image, raw depth image, and uses openCV to find bounding box for target centroid
         # inputs as AbstractInputPorts
