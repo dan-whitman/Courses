@@ -31,6 +31,7 @@ class CameraSystem(LeafSystem):
         self.frame_image_index = self.DeclareAbstractState(model_value=AbstractValue.Make(np.zeros((camera_height, camera_width, 4), dtype=np.uint8))) # modified image for cv2
         
         # declaring internal state updates
+        self.DeclarePeriodicUnrestrictedUpdateEvent(period_sec=self.dt, offset_sec=0.0, update=self.UpdateFrame)
 
         # declaring ports
         self.DeclareVectorInputPort(name='target_state', size=config.qT_num + config.vT_num) # target state input port
@@ -47,8 +48,8 @@ class CameraSystem(LeafSystem):
         # )
         self.DeclareStateOutputPort(name='frame_image', state_index=self.frame_image_index) # output port for modified cv2 image
 
-    # export altered frame function
-    def ExportFrame(self, context: Context, output: np.ndarray):
+    # update altered frame and references function
+    def UpdateFrame(self, context: Context, abstract_state):
         pass
 
     # inputs raw color image, raw depth image, and uses openCV to find bounding box for target centroid
