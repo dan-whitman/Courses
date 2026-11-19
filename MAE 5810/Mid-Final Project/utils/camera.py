@@ -28,6 +28,7 @@ class CameraSystem(LeafSystem):
         self.xT = np.zeros(config.qT_num + config.vT_num) # stored target state
 
         # declaring internal states
+        self.frame_image_index = self.DeclareAbstractState(model_value=AbstractValue.Make(np.zeros((camera_height, camera_width, 4), dtype=np.uint8))) # modified image for cv2
         
         # declaring internal state updates
 
@@ -44,7 +45,7 @@ class CameraSystem(LeafSystem):
         #                                alloc=lambda: AbstractValue.Make(np.zeros((camera_height, camera_width, 4), dtype=np.uint8)),
         #                                calc=self.ExportFrame
         # )
-        # DECLARE STATE OUTPUT PORT INSTEAD?
+        self.DeclareStateOutputPort(name='frame_image', state_index=self.frame_image_index) # output port for modified cv2 image
 
     # export altered frame function
     def ExportFrame(self, context: Context, output: np.ndarray):
