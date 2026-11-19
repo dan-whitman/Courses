@@ -107,15 +107,8 @@ ac_initial = np.array([ # initial robot conditions for reproducability
     [1.2, -0.3, 0.0]
 ])
 
-b_leader_initial = np.array([
+b_initial = np.array([
     [-0.3, 0.0, 0.0],
-    [0.0, 0.6, np.pi/2],
-    [0.0, 0.3, np.pi/4],
-    [0.0, -0.3, -np.pi/4],
-    [0.0, -0.6, -np.pi/2]
-])
-
-b_global_initial = np.array([
     [0.0, 0.6, np.pi/2],
     [0.0, 0.3, np.pi/4],
     [0.0, -0.3, -np.pi/4],
