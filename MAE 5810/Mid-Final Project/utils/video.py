@@ -1,6 +1,10 @@
+##### PYDRAKE IMPORTS
+
 ##### OTHER IMPORTS
 import numpy as np
 import cv2
+
+##### SELF-DEFINED IMPORTS
 
 ##### VIDEO ADD TEXT FUNCTION (adds text to video frame)
 def WriteVideoText(rgba, textflag: bool, t: float):

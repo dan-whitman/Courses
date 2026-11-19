@@ -40,6 +40,10 @@ prop_moment_ratio = 0.1 # ()
 prop_min_thrust = 0.0 # (N)
 prop_max_thrust = 6.0 # (N)
 
+##### TARGET INFORMATION
+target_height = 1.0 # (m)
+target_radius = 0.25 # (m)
+
 ##### CONTROL GAINS
 lqr_pos_gains = 100.0 # position control gains for lqr
 lqr_rpy_gains = 30.0 # rpy control gains for lqr
@@ -83,6 +87,9 @@ g_mag = None # gravity
 q_num = None # number of drone state coordinates
 v_num = None # number of drone state velocities
 u_num = None # number of control inputs
+
+qT_num = None # number of target state coordinates
+vT_num = None # number of target state velocities
 
 drone_instance = None # drone plant index for reference
 drone_mass = None # (kg) drone mass

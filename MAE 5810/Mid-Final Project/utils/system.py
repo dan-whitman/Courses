@@ -128,6 +128,10 @@ def DroneDiagram(with_camera: bool) -> Diagram:
     config.v_num = plant.num_velocities(model_instance=config.drone_instance) # number of state velocities
     config.u_num = propellers.get_command_input_port().size() # number of control inputs
 
+    if with_camera: 
+        config.qT_num = plant.num_positions(model_instance=config.target_instance) # number of target state coordinates
+        config.vT_num = plant.num_velocities(model_instance=config.target_instance) # number of target velocity coordinates
+
     # wiring the diagram
     open_builder.Connect(plant.get_body_poses_output_port(), propellers.get_body_poses_input_port())
     open_builder.Connect(propellers.get_spatial_forces_output_port(), plant.get_applied_spatial_force_input_port())
