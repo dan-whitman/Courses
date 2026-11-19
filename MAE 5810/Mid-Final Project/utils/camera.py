@@ -22,9 +22,8 @@ class CameraSystem(LeafSystem):
         # assigning system variables
         self.camera_width = camera_width # width of camera (pixels)
         self.camera_height = camera_height # height of camera (pixels)
-        self.dt = 1.0 / fps # fps interval for camera updates
 
-        # self.x0 = None # stored drone reference state
+        self.dt = 1.0 / fps # fps interval for camera updates
         self.xT = np.zeros(config.qT_num + config.vT_num) # stored target state
 
         # declaring internal states
@@ -38,15 +37,15 @@ class CameraSystem(LeafSystem):
         self.DeclareAbstractInputPort(name='color_image', model_value=AbstractValue.Make(ImageRgb8U)) # color image input port
         self.DeclareAbstractInputPort(name='depth_image', model_value=AbstractValue.Make(ImageDepth32F)) # depth image input port
 
-        self.DeclareVectorOutputPort(name='reference_state', size=config.q_num + config.v_num) # calculated drone reference state output
-        self.DeclareVectorOutputPort(name='target_estimate_state', size=config.qT_num + config.vT_num) # estimated target state output from camera image
-        self.DeclareVectorOutputPort(name='target_pixels', size=2) # true target COM pixels in camera frame
-        self.DeclareVectorOutputPort(name='target_estimate_pixels', size=2) # estimated target COM pixels in camera frame
+        self.DeclareVectorOutputPort(name='reference_state', size=config.q_num + config.v_num, calc=) # calculated drone reference state output
+        self.DeclareVectorOutputPort(name='target_estimate_state', size=config.qT_num + config.vT_num, calc=) # estimated target state output from camera image
+        self.DeclareVectorOutputPort(name='target_pixels', size=2, calc=) # true target COM pixels in camera frame
+        self.DeclareVectorOutputPort(name='target_estimate_pixels', size=2, calc=) # estimated target COM pixels in camera frame
+        self.DeclareStateOutputPort(name='frame_image', state_index=self.frame_image_index) # output port for modified cv2 image
         # self.DeclareAbstractOutputPort(name='frame_image', 
         #                                alloc=lambda: AbstractValue.Make(np.zeros((camera_height, camera_width, 4), dtype=np.uint8)),
         #                                calc=self.ExportFrame
-        # )
-        self.DeclareStateOutputPort(name='frame_image', state_index=self.frame_image_index) # output port for modified cv2 image
+        # ) # output port for modified cv2 image
 
     # update altered frame and references function
     def UpdateFrame(self, context: Context, abstract_state):
