@@ -22,8 +22,8 @@ config.DAT_DIR = config.LOC_DIR / config.DAT_DIR # update data directory
 if config.b_leader: config.b_N += 1 # add leader robot
 
 # create initial conditions for robots
-if config.b_leader: initial_conditions = config.b_leader_initial.T # if using a leader
-else: initial_conditions = config.b_global_initial.T # if all know plan
+if config.b_leader: initial_conditions = config.b_initial.T # if using a leader
+else: initial_conditions = config.b_initial[1:,:].T # if all know plan
 
 # generating robotarium
 if config.simulate: # if simulating
