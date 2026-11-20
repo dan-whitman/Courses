@@ -99,6 +99,7 @@ def ControlDiagram(open_diagram: Diagram, control_diagram: Diagram, camera_diagr
 
     # wiring the systems together
     closed_builder.Connect(open_diagram.GetOutputPort(port_name='drone_state'), control_diagram.GetInputPort(port_name='drone_state'))
+    closed_builder.Connect(open_diagram.GetOutputPort(port_name='drone_state'), camera_diagram.GetInputPort(port_name='drone_state'))
     closed_builder.Connect(camera_diagram.GetOutputPort(port_name='reference_state'), control_diagram.GetInputPort(port_name='reference_state'))
     closed_builder.Connect(control_diagram.GetOutputPort(port_name='propeller_thrusts'), open_diagram.GetInputPort(port_name='propeller_thrusts'))
     closed_builder.Connect(open_diagram.GetOutputPort(port_name='color_image'), camera_diagram.GetInputPort(port_name='color_image'))

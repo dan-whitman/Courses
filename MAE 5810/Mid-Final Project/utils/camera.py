@@ -34,6 +34,7 @@ class CameraSystem(LeafSystem):
 
         # declaring ports
         self.DeclareVectorInputPort(name='target_state', size=config.qT_num + config.vT_num) # target state input port
+        self.DeclareVectorInputPort(name='drone_state', size=config.q_num + config.v_num) # drone state input port
         self.DeclareAbstractInputPort(name='color_image', model_value=AbstractValue.Make(ImageRgb8U)) # color image input port
         self.DeclareAbstractInputPort(name='depth_image', model_value=AbstractValue.Make(ImageDepth32F)) # depth image input port
 
