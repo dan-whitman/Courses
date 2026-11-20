@@ -119,6 +119,7 @@ class CameraSystem(LeafSystem):
     def UpdateEstimate(self, context: Context, output: BasicVector):
         # read current states from context
         x = self.drone_state_port.Eval(context) # current drone state
+        xT = self.target_state_port.Eval(context) # current target state (DELETE LATER, FOR TESTING)
 
         # calculating transformations
         X_WD = RigidTransform(rpy=RollPitchYaw(x[0], x[1], x[2]), p=x[3:6]) # transform of drone with respect to world
@@ -133,6 +134,10 @@ class CameraSystem(LeafSystem):
             self.xTe[3] = xTe[0] # estimated x coordinate
             self.xTe[4] = xTe[1] # estimated y coordinate
             self.xTe[5] = xTe[2] # estimated z coordinate
+
+            self.xTe[3] = xT[3] # DIRECT COPY (CHANGE LATER)
+            self.xTe[4] = xT[4] # DIRECT COPY (CHANGE LATER)
+            self.xTe[5] = xT[5] + config.target_height / 2 # DIRECT COPY (CHANGE LATER)
 
         # UPDATE VELOCITIES BASED ON OPTICAL FLOW RESULTS AND DEPTH DIFFERENCES HERE
 
