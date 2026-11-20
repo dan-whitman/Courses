@@ -25,8 +25,10 @@ frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
 drone_initial_position = np.array([0.0, 0.0, 0.5]) # (m)
 drone_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
 
-target_initial_position = np.array([1.0, 3.0, 0.0]) # (m)
+target_initial_position = np.array([3.0, 1.0, 0.0]) # (m)
 target_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
+
+drone_target_offset_position = np.array([-2.0, 0.0, 0.1]) # (m) desired drone offset from target
 
 ##### SAVE FILE NAMES
 vid_file_name = 'fpv_camera_' + user_name + '.avi'
@@ -48,8 +50,8 @@ target_radius = 0.25 # (m)
 lqr_pos_gains = 100.0 # position control gains for lqr
 lqr_rpy_gains = 30.0 # rpy control gains for lqr
 
-lqr_pos_vel_gains = 30.0 # linear velocity gains for lqr
-lqr_rot_vel_gains = 10.0 # rotational velocity gains for lqr
+lqr_pos_vel_gains = 300.0 # linear velocity gains for lqr
+lqr_rot_vel_gains = 200.0 # rotational velocity gains for lqr
 
 lqr_thrust_gains = 1.0 # propeller thrust gains for lqr
 
@@ -93,12 +95,12 @@ vT_num = None # number of target state velocities
 
 drone_instance = None # drone plant index for reference
 drone_mass = None # (kg) drone mass
+target_instance = None # target plant index for reference
 
 u0 = None # (N) reference equilibrium propeller thrusts
-
-target_instance = None # target plant index for reference
 
 camera_info = None # camera infomration
 X_DC = None # camera transform to drone body
 
 meshcat = None # meshcat instance
+video = None # video instance

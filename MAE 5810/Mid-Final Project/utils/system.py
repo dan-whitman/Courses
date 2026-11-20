@@ -169,7 +169,7 @@ def DroneInitialContext(open_diagram: Diagram, with_camera: bool) -> Context:
         plant.SetFreeBodyPose(context=plant_context, body=target_body, X_JpJc=X_WT) # placing target
 
         camera_body = plant.GetBodyByName(name='drone_camera')
-        config.X_DC = plant.CalcRelativeTransform(context=plant_context, frame_A=drone_body, frame_B=camera_body)
+        config.X_DC = plant.CalcRelativeTransform(context=plant_context, frame_A=drone_body.body_frame(), frame_B=camera_body.body_frame())
 
     # defining initial propeller thrusts
     prop_thrust = 1.00 * config.g_mag * config.drone_mass / config.u_num # splitting thurst over all props

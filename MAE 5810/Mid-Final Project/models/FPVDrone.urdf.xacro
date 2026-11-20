@@ -65,8 +65,8 @@
   <xacro:property name="camera_ixy" value = "0.0"/>
   <xacro:property name="camera_ixz" value = "0.0"/>
   <xacro:property name="camera_iyz" value = "0.0"/>
-  <xacro:property name="camera_joint_origin" value = "0.0 ${base_radius} 0.0"/>
-  <xacro:property name="camera_joint_rpy" value = "${-pi/2} 0.0 0.0"/>
+  <xacro:property name="camera_joint_origin" value = "${base_radius} 0.0 0.0"/>
+  <xacro:property name="camera_joint_rpy" value = "${-pi/2} 0.0 ${-pi/2}"/>
   <!-- #endregion -->
 
   <!-- #region Material Definitions -->
@@ -311,7 +311,7 @@
   <joint name="base_to_arm_2" type="fixed">
     <parent link="drone_base"/>
     <child link="drone_arm_2"/>
-    <origin xyz="${base_radius*cos(3*pi/4)} ${base_radius*sin(3*pi/4)} ${arm_joint_zorigin}" rpy="${-pi/2} 0.0 ${-pi/4+pi/2}"/>
+    <origin xyz="${base_radius*cos(3*pi/4)} ${base_radius*sin(3*pi/4)} ${arm_joint_zorigin}" rpy="${-pi/2} 0.0 ${-pi/4+1*pi/2}"/>
   </joint>
 
   <joint name="base_to_arm_3" type="fixed">

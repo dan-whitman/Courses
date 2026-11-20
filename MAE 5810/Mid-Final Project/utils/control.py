@@ -109,6 +109,7 @@ def ControlDiagram(open_diagram: Diagram, control_diagram: Diagram, camera_diagr
     # exposing ports
     closed_builder.ExportOutput(output=open_diagram.GetOutputPort(port_name='drone_state'), name='drone_state') # for printing/tracking drone state
     closed_builder.ExportOutput(output=open_diagram.GetOutputPort(port_name='target_state'), name='target_state') # for printing tracking target state
+    closed_builder.ExportOutput(output=camera_diagram.GetOutputPort(port_name='reference_state'), name='reference_state') # for printing reference state
     closed_builder.ExportOutput(output=control_diagram.GetOutputPort(port_name='propeller_thrusts'), name='propeller_thrusts') # for printing/tracking propeller thrusts
     closed_builder.ExportOutput(output=camera_diagram.GetOutputPort(port_name='target_estimate_state'), name='target_estimate_state') # drone estimate of target state
     closed_builder.ExportOutput(output=camera_diagram.GetOutputPort(port_name='target_pixels'), name='target_pixels') # true camera pixels for target base

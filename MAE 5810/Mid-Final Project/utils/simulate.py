@@ -25,6 +25,7 @@ def SimDiagram(closed_diagram: Diagram) -> Diagram:
     # exposing ports
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='drone_state'), name='drone_state') # for printing/tracking hexrotor state
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='target_state'), name='target_state') # for printing tracking target state
+    sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='reference_state'), name='reference_state') # for printing reference state
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='propeller_thrusts'), name='propeller_thrusts') # for printing/tracking propeller thrusts
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='target_estimate_state'), name='target_estimate_state') # drone estimate of target state
     sim_builder.ExportOutput(output=closed_diagram.GetOutputPort(port_name='target_pixels'), name='target_pixels') # true camera pixels for target base
@@ -62,7 +63,7 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
 
     # creating video output
     if config.args.video == 1: # if outputting video
-        video = cv2.VideoWriter(
+        config.video = cv2.VideoWriter(
             filename=str(config.VID_DIR / config.vid_file_name), apiPreference=0, fourcc=cv2.VideoWriter_fourcc(*'MJPG'), fps=config.camera_fps, frameSize=(config.camera_width, config.camera_height)
         )
 
@@ -73,13 +74,25 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
         # evaluate current data and log
         x = sim_diagram.GetOutputPort(port_name='drone_state').Eval(sim_context) # evaluate drone state
         xT = sim_diagram.GetOutputPort(port_name='target_state').Eval(sim_context) # evaluate target state
+        x0 = sim_diagram.GetOutputPort(port_name='reference_state').Eval(sim_context) # evaluate controller reference state
         u = sim_diagram.GetOutputPort(port_name='propeller_thrusts').Eval(sim_context) # evaluate propeller thrusts
         xTe = sim_diagram.GetOutputPort(port_name='target_estimate_state').Eval(sim_context) # evaluate estimated target state
         pT = sim_diagram.GetOutputPort(port_name='target_pixels').Eval(sim_context) # evaluate target pixels in camera
         pTe = sim_diagram.GetOutputPort(port_name='target_estimate_pixels').Eval(sim_context) # evaluate estimated target pixels in camera
-        image = sim_diagram.GetOutputPort(port_name='frame_image').Eval(sim_context) # get camera frame image
+        rgba = sim_diagram.GetOutputPort(port_name='frame_image').Eval(sim_context) # get camera frame image
 
-        # DO STUFF HERE (LOG DATA AND ADD FRAME TO CV2 VIDEO
+        # DO STUFF HERE (LOG DATA)
+
+        xT[5] = xT[5] + config.target_height / 2
+        # print(xT[3:6], xTe[3:6])
+        # print(pT, pTe)
+        print(x[3:6], x0[3:6])
+
+        # adding frame to video
+        if config.args.video == 1:
+            rgb = rgba[:,:,:3] # remove alpha channel from data
+            bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR) # convert to bgr color for opencv
+            config.video.write(bgr) # add frame to video
 
     # end visualization
     VisualStop()
