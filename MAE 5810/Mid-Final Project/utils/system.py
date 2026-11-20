@@ -82,9 +82,6 @@ def DronePropellers(plant: MultibodyPlant) -> Propeller:
 def DroneCamera(builder: DiagramBuilder, plant: MultibodyPlant, scene_graph: SceneGraph) -> None:
     print(f'\n=====CREATING DRONE CAMERA=====')
 
-    # finding camera body
-    camera_body = plant.GetBodyByName(name='drone_camera')
-
     # creating camera configuration
     camera_config = CameraConfig()
     camera_config.name = 'drone_camera'
@@ -162,14 +159,17 @@ def DroneInitialContext(open_diagram: Diagram, with_camera: bool) -> Context:
     config.drone_mass = plant.CalcTotalMass(context=plant_context, model_instances=[config.drone_instance]) # finding drone mass
 
     drone_body = plant.GetBodyByName(name='drone_base') # hexrotor base body
-    X_WR = RigidTransform(rpy=config.drone_initial_rpy, p=config.drone_initial_position) # target transform
-    plant.SetFreeBodyPose(context=plant_context, body=drone_body, X_JpJc=X_WR) # placing hexrotor
+    X_WD = RigidTransform(rpy=config.drone_initial_rpy, p=config.drone_initial_position) # target transform
+    plant.SetFreeBodyPose(context=plant_context, body=drone_body, X_JpJc=X_WD) # placing hexrotor
 
-    # placing the target (only for complete plant)
+    # placing the target and extracting camera information (only for complete plant)
     if with_camera:
         target_body = plant.GetBodyByName(name='target_base')
         X_WT = RigidTransform(rpy=config.target_initial_rpy, p=config.target_initial_position) # target transform
         plant.SetFreeBodyPose(context=plant_context, body=target_body, X_JpJc=X_WT) # placing target
+
+        camera_body = plant.GetBodyByName(name='drone_camera')
+        config.X_DC = plant.CalcRelativeTransform(context=plant_context, frame_A=drone_body, frame_B=camera_body)
 
     # defining initial propeller thrusts
     prop_thrust = 1.00 * config.g_mag * config.drone_mass / config.u_num # splitting thurst over all props

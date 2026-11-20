@@ -41,7 +41,7 @@ class ControlLQRSystem(LeafSystem):
 
     # update thrusts function
     def UpdateThrusts(self, context: Context, output: BasicVector):
-        # read current state from context
+        # read current states from context
         x = self.drone_state_port.Eval(context)
         x0 = self.reference_state_port.Eval(context)
 

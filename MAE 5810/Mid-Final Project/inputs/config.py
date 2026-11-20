@@ -99,5 +99,6 @@ u0 = None # (N) reference equilibrium propeller thrusts
 target_instance = None # target plant index for reference
 
 camera_info = None # camera infomration
+X_DC = None # camera transform to drone body
 
 meshcat = None # meshcat instance
