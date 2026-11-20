@@ -84,9 +84,9 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
         # DO STUFF HERE (LOG DATA)
 
         xT[5] = xT[5] + config.target_height / 2
-        # print(xT[3:6], xTe[3:6])
+        print(xT[3:6], xTe[3:6])
         # print(pT, pTe)
-        print(x[3:6], x0[3:6])
+        # print(x[3:6], x0[3:6])
 
         # adding frame to video
         if config.args.video == 1:

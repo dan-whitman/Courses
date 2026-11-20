@@ -92,8 +92,6 @@ class CameraSystem(LeafSystem):
         if not np.isnan(np.array([self.uTe, self.vTe])).any(): # if there are valid pixel estimates
             self.wTe = depth_image.at(x=int(self.uTe), y=int(self.vTe))[0] + config.target_radius # extract depth and compensate for target size
 
-            self.wTe = self.wT # DIRECT COPY (CHANGE LATER)
-
         # add overlays to image
         color_image = VideoWritePoint(rgba=color_image, coords=np.array([self.uT, self.vT]), color=(0, 0, 0), radius=6, thickness=2) # true target COM position
         color_image = VideoWritePoint(rgba=color_image, coords=np.array([self.uTe, self.vTe]), color=(0, 200, 200), radius=10, thickness=2) # estimated target COM position
@@ -126,7 +124,7 @@ class CameraSystem(LeafSystem):
         X_WC = X_WD.multiply(other=self.X_BC) # transform for camera with respect to world
 
         # applying transformations
-        pTe = np.array([self.uTe, self.vTe, self.wTe, 1]) # create pixel vector
+        pTe = np.array([self.uTe * self.wTe, self.vTe * self.wTe, self.wTe, 1]) # create pixel vector
 
         if not np.isnan(pTe).any(): # if there are no nan values (target is in camera)
             xTe = X_WC.GetAsMatrix4() @ np.linalg.inv(self.K) @ pTe # estimate target position in world frame
@@ -134,10 +132,6 @@ class CameraSystem(LeafSystem):
             self.xTe[3] = xTe[0] # estimated x coordinate
             self.xTe[4] = xTe[1] # estimated y coordinate
             self.xTe[5] = xTe[2] # estimated z coordinate
-
-            self.xTe[3] = xT[3] # DIRECT COPY (CHANGE LATER)
-            self.xTe[4] = xT[4] # DIRECT COPY (CHANGE LATER)
-            self.xTe[5] = xT[5] + config.target_height / 2 # DIRECT COPY (CHANGE LATER)
 
         # UPDATE VELOCITIES BASED ON OPTICAL FLOW RESULTS AND DEPTH DIFFERENCES HERE
 
