@@ -92,18 +92,6 @@ if __name__ == '__main__':
 
 
 '''
-# step through simulation
-for t in frame_times:
-    # t = frame / camera_fps # simulation time
-    simulator.AdvanceTo(t) # advance simulation
-    camera_sim_context = camera.GetMyContextFromRoot(simulator.get_context()) # get camera context at t
-    plant_sim_context = plant.GetMyContextFromRoot(simulator.get_context()) # get plant context at t
-
-    # finding data of interest
-    X_WC = camera.body_pose_in_world_output_port().Eval(camera_sim_context) # finding camera pose
-    X_CW = X_WC.inverse() # finding world in camera
-    R_WC = X_WC.rotation().matrix() # camera rotation (in world frame)
-
 ##### OUTPUTTING DATA
 print(f'\n=====SAVING RESULTS=====')
 

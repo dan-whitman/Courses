@@ -27,11 +27,11 @@ frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
 drone_initial_position = np.array([0.0, -4.0, 1.0]) # (m)
 drone_initial_rpy = RollPitchYaw(0.0, 0.0, np.pi/2) # (rad)
 
-# drone_initial_position = np.array([-4.0, 2.0, 1.0]) # (m)
-# drone_initial_rpy = RollPitchYaw(0.0, 0.0, np.pi/4) # (rad)
-
 target_initial_position = np.array([0.0, 4.0, 0.0]) # (m)
 target_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
+target_final_position = np.array([15.0, 4.0, 0.0]) # (m)
+target_final_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
+target_motion_duration = simulation_duration # (s)
 
 obstacle_initial_position = np.array([2.0, -4.0, 0.0])
 obstacle_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0)

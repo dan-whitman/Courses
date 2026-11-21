@@ -189,20 +189,3 @@ def DroneInitialContext(open_diagram: Diagram, with_camera: bool) -> Context:
 
     # return context
     return initial_context
-
-##### DRONE STATE EVALUATE FUNCTION (evalues hexrotor states and thrusts for given context)
-def DroneEval(diagram: Diagram, context: Context) -> tuple[np.ndarray, np.ndarray]:
-    print(f'\n=====EVALUATING HEXROTOR STATE=====')
-
-    # evaulating the state
-    x = diagram.GetOutputPort(port_name='drone_state').Eval(context)
-
-    # evaulating the thrusts
-    if diagram.HasInputPort(port_name='propeller_thrusts'):
-        u = diagram.GetInputPort(port_name='propeller_thrusts').Eval(context)
-
-    elif diagram.HasOutputPort(port_name='propeller_thrusts'):
-        u = diagram.GetOutputPort(port_name='propeller_thrusts').Eval(context)
-
-    # returning values
-    return x, u
