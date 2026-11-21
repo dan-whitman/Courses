@@ -1,10 +1,12 @@
 ##### PYDRAKE IMPORTS
 from pydrake.systems.framework import DiagramBuilder, Diagram, Context
-from pydrake.multibody.plant import AddMultibodyPlantSceneGraph, MultibodyPlant, CoulombFriction, BaseBodyJointType, PropellerInfo, Propeller
+from pydrake.multibody.plant import AddMultibodyPlantSceneGraph, MultibodyPlant, CoulombFriction, BaseBodyJointType, PropellerInfo, Propeller, ExternallyAppliedSpatialForceMultiplexer
 from pydrake.multibody.parsing import Parser
 from pydrake.math import RigidTransform
 from pydrake.geometry import SceneGraph, ProximityProperties, AddContactMaterial, HalfSpace
 from pydrake.systems.sensors import CameraConfig, ApplyCameraConfig, CameraInfo
+from pydrake.systems.primitives import TrajectorySource
+from pydrake.trajectories import PiecewisePolynomial
 
 ##### OTHER IMPORTS
 import numpy as np
@@ -13,6 +15,7 @@ import numpy as np
 import inputs.config as config
 from utils.visual import VisualPlantSceneFrames
 from utils.xacro import XacroToURDF
+from utils.control import ControlPDSystem
 
 ##### DRONE PLANT FUNCTION (creates hexrotor plant/scene graph objects)
 def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool) -> tuple[MultibodyPlant, SceneGraph]:
@@ -34,6 +37,9 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool
     surface_friction = CoulombFriction(static_friction=config.static_friction, dynamic_friction=config.dynamic_friction) # floor friction
     AddContactMaterial(friction=surface_friction, properties=proximity_properties)
 
+    plant.set_penetration_allowance(penetration_allowance=0.01) # loosen tolerance to increase solving speed
+    plant.set_stiction_tolerance(v_stiction=0.02) # loosen tolerance to increase solving speed
+
     plant.RegisterCollisionGeometry(
         body=plant.world_body(), X_BG=X_WG, shape=HalfSpace(), name='ground_collision', properties=proximity_properties
     )
@@ -48,6 +54,8 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool
     if with_camera: # if using total model
         config.target_instance = parser.AddModelsFromString(file_contents=Target, file_type='urdf')[0] # only add target for complete plant
         config.obstacle_instance = parser.AddModelsFromString(file_contents=Obstacle, file_type='urdf')[0] # only add obstacle for complete plant
+
+        config.target_index = plant.GetBodyByName(name='target_base').index() # get target base index
 
     # configuring dynamics to rpy representation
     plant.SetBaseBodyJointType(joint_type=BaseBodyJointType.kRpyFloatingJoint)
@@ -108,7 +116,40 @@ def DroneCamera(builder: DiagramBuilder, plant: MultibodyPlant, scene_graph: Sce
     # apply camera to builder
     ApplyCameraConfig(config=camera_config, builder=builder, plant=plant, scene_graph=scene_graph)
 
-##### Drone DIAGRAM FUNCTION (creates open-loop hexrotor diagram)
+##### DRONE TARGET DIAGRAM FUNCTION (creates diagram for target to allow it to move)
+def DroneTargetDiagram() -> Diagram:
+    print(f'\n=====CREATING TARGET DIAGRAM=====')
+
+    # initiating the builder
+    target_builder = DiagramBuilder()
+
+    # creating the trajectory
+    xT0 = np.zeros(config.qT_num + config.vT_num) # initially 0 array
+    xTf = np.zeros(config.qT_num + config.vT_num) # initially 0 array
+
+    xT0[:3] = config.target_initial_rpy.vector() # assign initial rpy
+    xT0[3:6] = config.target_initial_position # assign initial position
+    xTf[:3] = config.target_final_rpy.vector() # assign final rpy
+    xTf[3:6] = config.target_final_position # assign final position
+
+    xT_traj = PiecewisePolynomial.FirstOrderHold(breaks=[0.0, config.target_motion_duration], samples=np.column_stack((xT0, xTf)))
+
+    # adding subsystems
+    pd = target_builder.AddNamedSystem(name='pd', system=ControlPDSystem(Kp=config.Kp_gain, Kd=config.Kd_gain))
+    trajec = target_builder.AddNamedSystem(name='trajec', system=TrajectorySource(trajectory=xT_traj))
+
+    # wiring the systems together
+    target_builder.Connect(trajec.get_output_port(), pd.GetInputPort(port_name='target_trajec'))
+
+    # exposing ports
+    target_builder.ExportInput(input=pd.GetInputPort(port_name='target_state'), name='target_state')
+
+    target_builder.ExportOutput(output=pd.GetOutputPort(port_name='target_force'), name='target_force')
+
+    # complete diagram
+    return target_builder.Build()
+
+##### DRONE DIAGRAM FUNCTION (creates open-loop hexrotor diagram)
 def DroneDiagram(with_camera: bool) -> Diagram:
     print(f'\n=====CREATING DRONE DIAGRAM=====')
 
@@ -137,7 +178,18 @@ def DroneDiagram(with_camera: bool) -> Diagram:
 
     # wiring the diagram
     open_builder.Connect(plant.get_body_poses_output_port(), propellers.get_body_poses_input_port())
-    open_builder.Connect(propellers.get_spatial_forces_output_port(), plant.get_applied_spatial_force_input_port())
+
+    if not with_camera: # if only using the drone
+        open_builder.Connect(propellers.get_spatial_forces_output_port(), plant.get_applied_spatial_force_input_port())
+
+    else: # else with the full plant
+        target = open_builder.AddNamedSystem(name='target', system=DroneTargetDiagram())
+        mux = open_builder.AddNamedSystem(name='mux', system=ExternallyAppliedSpatialForceMultiplexer(num_inputs=2))
+
+        open_builder.Connect(propellers.get_spatial_forces_output_port(), mux.get_input_port(0))
+        open_builder.Connect(target.GetOutputPort(port_name='target_force'), mux.get_input_port(1))
+        open_builder.Connect(mux.get_output_port(), plant.get_applied_spatial_force_input_port())
+        open_builder.Connect(plant.get_state_output_port(model_instance=config.target_instance), target.GetInputPort(port_name='target_state'))
 
     # exposing ports
     open_builder.ExportInput(input=propellers.get_command_input_port(), name='propeller_thrusts') # propeller inputs

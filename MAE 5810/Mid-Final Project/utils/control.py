@@ -2,12 +2,56 @@
 from pydrake.systems.framework import DiagramBuilder, Diagram, Context, LeafSystem, BasicVector
 from pydrake.systems.controllers import LinearQuadraticRegulator
 from pydrake.systems.primitives import AffineSystem, FirstOrderTaylorApproximation
+from pydrake.multibody.plant import ExternallyAppliedSpatialForce
+from pydrake.multibody.math import SpatialForce
+from pydrake.common.value import Value
 
 ##### OTHER IMPORTS
 import numpy as np
 
 ##### SELF_DEFINED IMPORTS
 import inputs.config as config
+
+##### PD SYSTEM DEFINITION (LeafSystem for PD controller)
+class ControlPDSystem(LeafSystem):
+    # sared variables
+
+    # initialization
+    def __init__(self, Kp: float, Kd: float):
+        print(f'\n=====CREATING PD SYSTEM=====')
+        super().__init__() # initializing the system C++ wrapper
+
+        # assigning system variables
+        self.Kp = np.zeros((6, config.qT_num))
+        self.Kd = np.zeros((6, config.vT_num))
+        np.fill_diagonal(self.Kp, Kp * np.ones(config.qT_num))
+        np.fill_diagonal(self.Kd, Kd * np.ones(config.vT_num))
+
+        # declaring internal states
+
+        # declaring ports
+        self.target_state_port = self.DeclareVectorInputPort(name='target_state', size=config.qT_num + config.vT_num) # target state input port
+        self.target_trajec_port = self.DeclareVectorInputPort(name='target_trajec', size=config.qT_num + config.vT_num) # target trajectory port
+
+        self.target_force_port = self.DeclareAbstractOutputPort(
+            name='target_force', alloc=lambda: Value[list[ExternallyAppliedSpatialForce]](),
+            calc=self.UpdateForce
+        )
+
+    # update force function
+    def UpdateForce(self, context: Context, output):
+        # read current states from context
+        xT = self.target_state_port.Eval(context)
+        xT_traj = self.target_trajec_port.Eval(context)
+
+        u = - self.Kp @ (xT[:config.qT_num] - xT_traj[:config.qT_num]) - self.Kd @ (xT[config.qT_num:] - xT_traj[config.qT_num:]) # calculate new forces
+
+        u_out = ExternallyAppliedSpatialForce() # create force
+        u_out.body_index = config.target_index # apply to target base index
+        u_out.p_BoBq_B = np.zeros(3) # apply force at COM
+        u_out.F_Bq_W = SpatialForce(F=u)
+
+        output.set_value([u_out]) # set new forces
 
 ##### LQR SYSTEM DEFINITION (LeafSystem for LQR controller)
 class ControlLQRSystem(LeafSystem):

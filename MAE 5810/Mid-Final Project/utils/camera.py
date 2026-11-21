@@ -43,7 +43,10 @@ class CameraSystem(LeafSystem):
         self.vT = np.nan # stored y pixel for target
         self.wT = np.nan # stored z pixel (depth) for target
 
-        self.xTe = np.zeros(config.qT_num + config.vT_num) # stored target estimate target
+        self.xTe = np.zeros(config.qT_num + config.vT_num) # stored target estimate state
+        self.xTe[3] = np.nan
+        self.xTe[4] = np.nan
+        self.xTe[5] = np.nan
         self.uTe = np.nan # stored estimate x pixel for target
         self.vTe = np.nan # stored estimate y pixel for target
         self.wTe = np.nan # stored estimate z pixel (depth) for target
@@ -108,14 +111,17 @@ class CameraSystem(LeafSystem):
         x0 = np.zeros(config.q_num + config.v_num) # initialize to all 0
 
         # setting position reference
-        x0[3] = self.xTe[3] + config.drone_target_offset_position[0] # set the reference x coordinate for the drone
-        x0[4] = self.xTe[4] + config.drone_target_offset_position[1] # set the reference y coordinate for the drone
-        x0[5] = self.xTe[5] + config.drone_target_offset_position[2] # set the reference z coordinate for the drone
+        if not (np.isnan(self.xTe).any() or np.isinf(self.xTe).any()): # if there are valid target estimates
+            x0[3] = self.xTe[3] + config.drone_target_offset_position[0] # set the reference x coordinate for the drone
+            x0[4] = self.xTe[4] + config.drone_target_offset_position[1] # set the reference y coordinate for the drone
+            x0[5] = self.xTe[5] + config.drone_target_offset_position[2] # set the reference z coordinate for the drone            
 
-        # setting rotational reference
-        r = self.xTe[3:6] - x[3:6] # find displacement vector from x to xT
-        yaw = np.acos(np.dot(r, np.array([1.0, 0.0, 0.0])) / np.linalg.norm(r)) # find desired yaw angle for keeping target in view
-        x0[2] = yaw # set the reference yaw angle for the drone
+            # setting rotational reference
+            r = self.xTe[3:6] - x[3:6] # find displacement vector from x to xT
+            yaw = np.atan2(r[1], r[0]) # find desired yaw angle for keeping target in view
+            x0[2] = yaw # set the reference yaw angle for the drone
+        else:
+            x0 = x # remain stationary
 
         # update output
         output.SetFromVector(value=x0) # return new reference state
@@ -135,6 +141,7 @@ class CameraSystem(LeafSystem):
         if not (np.isnan(pTe).any() or np.isinf(pTe).any()): # if there are no nan or inf values (target is in camera)
             xTe = X_WC.GetAsMatrix4() @ np.linalg.inv(self.K) @ pTe # estimate target position in world frame
 
+            # if np.abs(self.wTe - self.wT) < 0.5: # FOR TESTING UPDATE LATER WHEN INPUT BOUNDING BOX
             self.xTe[3] = xTe[0] # estimated x coordinate
             self.xTe[4] = xTe[1] # estimated y coordinate
             self.xTe[5] = xTe[2] # estimated z coordinate
