@@ -89,9 +89,9 @@ class CameraSystem(LeafSystem):
         self.uTe = self.uT # DIRECT COPY (CHANGE LATER)
         self.vTe = self.vT # DIRECT COPY (CHANGE LATER)
 
-        if not np.isnan(np.array([self.uTe, self.vTe])).any(): # if there are valid pixel estimates
+        if not (np.isnan(np.array([self.uTe, self.vTe])).any() or np.isinf(np.array([self.uTe, self.vTe])).any()): # if there are valid pixel estimates
             self.wTe = depth_image.at(x=int(self.uTe), y=int(self.vTe))[0] + config.target_radius # extract depth and compensate for target size
-
+            
         # add overlays to image
         color_image = VideoWritePoint(rgba=color_image, coords=np.array([self.uT, self.vT]), color=(0, 0, 0), radius=6, thickness=2) # true target COM position
         color_image = VideoWritePoint(rgba=color_image, coords=np.array([self.uTe, self.vTe]), color=(0, 200, 200), radius=10, thickness=2) # estimated target COM position
@@ -102,13 +102,20 @@ class CameraSystem(LeafSystem):
     # update drone reference output function
     def UpdateReference(self, context: Context, output: BasicVector):
         # read current states from context
+        x = self.drone_state_port.Eval(context) # read current drone state
 
         # updating reference state based on internal target states
         x0 = np.zeros(config.q_num + config.v_num) # initialize to all 0
 
+        # setting position reference
         x0[3] = self.xTe[3] + config.drone_target_offset_position[0] # set the reference x coordinate for the drone
         x0[4] = self.xTe[4] + config.drone_target_offset_position[1] # set the reference y coordinate for the drone
         x0[5] = self.xTe[5] + config.drone_target_offset_position[2] # set the reference z coordinate for the drone
+
+        # setting rotational reference
+        r = self.xTe[3:6] - x[3:6] # find displacement vector from x to xT
+        yaw = np.acos(np.dot(r, np.array([1.0, 0.0, 0.0])) / np.linalg.norm(r)) # find desired yaw angle for keeping target in view
+        x0[2] = yaw # set the reference yaw angle for the drone
 
         # update output
         output.SetFromVector(value=x0) # return new reference state
@@ -117,7 +124,6 @@ class CameraSystem(LeafSystem):
     def UpdateEstimate(self, context: Context, output: BasicVector):
         # read current states from context
         x = self.drone_state_port.Eval(context) # current drone state
-        xT = self.target_state_port.Eval(context) # current target state (DELETE LATER, FOR TESTING)
 
         # calculating transformations
         X_WD = RigidTransform(rpy=RollPitchYaw(x[0], x[1], x[2]), p=x[3:6]) # transform of drone with respect to world
@@ -126,7 +132,7 @@ class CameraSystem(LeafSystem):
         # applying transformations
         pTe = np.array([self.uTe * self.wTe, self.vTe * self.wTe, self.wTe, 1]) # create pixel vector
 
-        if not np.isnan(pTe).any(): # if there are no nan values (target is in camera)
+        if not (np.isnan(pTe).any() or np.isinf(pTe).any()): # if there are no nan or inf values (target is in camera)
             xTe = X_WC.GetAsMatrix4() @ np.linalg.inv(self.K) @ pTe # estimate target position in world frame
 
             self.xTe[3] = xTe[0] # estimated x coordinate

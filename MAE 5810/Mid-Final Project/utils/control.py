@@ -46,6 +46,7 @@ class ControlLQRSystem(LeafSystem):
         x0 = self.reference_state_port.Eval(context)
 
         u = self.u0 - self.K @ (x - x0) # calculate new thrusts
+        u = np.clip(u, a_min=config.prop_min_thrust, a_max=config.prop_max_thrust) # saturate thrusts
 
         output.SetFromVector(value=u) # set new thrusts
 

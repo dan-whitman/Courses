@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<robot name="obstacle" xmlns:xacro="http://ros.org/wiki/xacro" xmlns:drake="http://mit.edu">
+
+  <!-- File Conventions
+    - mass (kg)
+    - length (m)
+    - inertia (kgm^2)
+    - 
+  -->
+
+  <!-- TO DO
+    - update dimensions
+    -
+  -->
+
+  <!-- #region Xacro Definitions -->
+  <xacro:property name="pi" value="3.141592653589793"/>
+  <xacro:property name="zero_origin" value = "0.0 0.0 0.0"/>
+  <xacro:property name="zero_rpy" value = "0.0 0.0 0.0"/> 
+
+  <xacro:property name="obstacle_xsize" value = "1.0"/>
+  <xacro:property name="obstacle_ysize" value = "14.0"/>
+  <xacro:property name="obstacle_zsize" value = "4.0"/>
+  <xacro:property name="obstacle_origin" value = "0.0 0.0 ${obstacle_zsize/2}"/>
+  <xacro:property name="obstacle_mass" value = "1000.0"/>
+  <xacro:property name="obstacle_ixx" value = "${(obstacle_mass*(obstacle_ysize**2+obstacle_zsize**2))/12 + obstacle_mass*(obstacle_zsize/2)**2}"/>
+  <xacro:property name="obstacle_iyy" value = "${(obstacle_mass*(obstacle_xsize**2+obstacle_zsize**2))/12 + obstacle_mass*(obstacle_zsize/2)**2}"/>
+  <xacro:property name="obstacle_izz" value = "${(obstacle_mass*(obstacle_xsize**2+obstacle_ysize**2))/12}"/>
+  <xacro:property name="obstacle_ixy" value = "0.0"/>
+  <xacro:property name="obstacle_ixz" value = "0.0"/>
+  <xacro:property name="obstacle_iyz" value = "0.0"/>
+  <!-- #endregion -->
+
+  <!-- #region Material Definitions -->
+  <material name="gray">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+  <material name="red">
+    <color rgba="0.8 0.0 0.0 1.0"/>
+  </material>
+  <material name="green">
+    <color rgba="0.0 0.8 0.0 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>
+  <!-- #endregion -->
+
+  <!-- #region Obstacle Base -->
+  <link name="obstacle_base">
+    <inertial>
+      <origin xyz="${obstacle_origin}" rpy="${zero_rpy}"/>
+      <mass value="${obstacle_mass}"/>
+      <inertia ixx="${obstacle_ixx}" ixy="${obstacle_ixy}" ixz="${obstacle_ixz}" iyy="${obstacle_iyy}" iyz="${obstacle_iyz}" izz="${obstacle_izz}"/>
+    </inertial>
+    <visual>
+      <origin xyz="${obstacle_origin}" rpy="${zero_rpy}"/>
+      <geometry>
+        <box size="${obstacle_xsize} ${obstacle_ysize} ${obstacle_zsize}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="${obstacle_origin}" rpy="${zero_rpy}"/>
+      <geometry>
+        <box size="${obstacle_xsize} ${obstacle_ysize} ${obstacle_zsize}"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- #endregion -->
+
+  <!-- #region Drake Commands -->
+  <drake:collision_filter_group name="self_collision_ignore">
+    <drake:member link="obstacle_base"/>
+    <drake:ignored_collision_filter_group name="self_collision_ignore"/>
+  </drake:collision_filter_group>
+  <!-- #endregion -->
+
+</robot>
