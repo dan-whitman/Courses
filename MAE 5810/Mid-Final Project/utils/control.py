@@ -1,6 +1,6 @@
 ##### PYDRAKE IMPORTS
-from pydrake.systems.framework import DiagramBuilder, Diagram, Context, LeafSystem, BasicVector
-from pydrake.systems.controllers import LinearQuadraticRegulator
+from pydrake.systems.framework import DiagramBuilder, Diagram, Context, LeafSystem, DiscreteValues
+from pydrake.systems.controllers import DiscreteTimeLinearQuadraticRegulator
 from pydrake.systems.primitives import AffineSystem, FirstOrderTaylorApproximation
 from pydrake.multibody.plant import ExternallyAppliedSpatialForce
 from pydrake.multibody.math import SpatialForce
@@ -8,6 +8,7 @@ from pydrake.common.value import Value
 
 ##### OTHER IMPORTS
 import numpy as np
+import scipy.linalg as la
 
 ##### SELF_DEFINED IMPORTS
 import inputs.config as config
@@ -58,41 +59,67 @@ class ControlLQRSystem(LeafSystem):
     # shared variables
 
     # initialization
-    def __init__(self, affine_system: AffineSystem, Q: np.ndarray, R: np.ndarray, N: np.ndarray, u0: np.ndarray):
+    def __init__(self, affine_system: AffineSystem, Q: np.ndarray, R: np.ndarray, N: np.ndarray, u0: np.ndarray, fps: float):
         print(f'\n=====CREATING LQR SYSTEM=====')
         super().__init__() # initializing the system C++ wrapper
 
         # assigning system variables
-        self.affine_system = affine_system # assign hexrotor diagram
+        self.A = affine_system.A() # assign continuous mode A
+        self.B = affine_system.B() # assign continuous mode B
 
         self.Q = Q # assign Q matrix
         self.R = R # assign R matrix
         self.N = N # assign N matrix
 
+        self.dt = 1.0 / fps # frame rate of the camera
+
+        self.K = None # stored LQR gain matrix
         self.x0 = None # stored reference state
         self.u0 = u0 # stored reference thrusts
 
-        # determining LQR gain
-        self.K, _ = LinearQuadraticRegulator(A=affine_system.A(), B=affine_system.B(), Q=self.Q, R=self.R, N=self.N)
-
         # declaring internal states
+        self.propeller_thrusts_index = self.DeclareDiscreteState(num_state_variables=config.u_num) # discrete control thrusts
+
+        # declaring internal state updates
+        self.DeclareInitializationDiscreteUpdateEvent(update=self.UpdateGain) # creates initial gain
+        self.DeclarePeriodicDiscreteUpdateEvent(period_sec=self.dt, offset_sec=0.0, update=self.UpdateThrusts) # update thrusts at interval dt
 
         # declaring ports
         self.drone_state_port = self.DeclareVectorInputPort(name='drone_state', size=config.q_num + config.v_num) # drone state input
         self.reference_state_port = self.DeclareVectorInputPort(name='reference_state', size = config.q_num + config.v_num) # desired drone state reference input
 
-        self.propeller_thrusts_port = self.DeclareVectorOutputPort(name='propeller_thrusts', size=config.u_num, calc=self.UpdateThrusts)
+        self.propeller_thrusts_port = self.DeclareStateOutputPort(name='propeller_thrusts', state_index=self.propeller_thrusts_index) # state output port for thrusts
+
+    # initialize gain function
+    def UpdateGain(self, context: Context, discrete_state: DiscreteValues):
+        # find shape of matrices
+        n, _ = np.shape(self.A) # number of states
+        _, m = np.shape(self.B) # number of inputs
+
+        # discretizing the system
+        M = np.zeros((n + m, n + m)) # empty matrix for zero-order hold
+        M[:n,:n] = self.A * self.dt # add A to matrix
+        M[:n,n:] = self.B * self.dt # add B to matrix
+
+        # solving for ZOH matrices
+        expM = la.expm(M) # compute the matrix exponential (zero-order hold) (CAN REPLACE WITH TAYLOR APPROXIMATION)
+
+        Ad = expM[:n,:n] # discretized A
+        Bd = expM[:n,n:] # discretized B
+
+        self.K, _ = DiscreteTimeLinearQuadraticRegulator(A=Ad, B=Bd, Q=self.Q, R=self.R, N=self.N) # solving for K
+        config.Klqr = self.K
 
     # update thrusts function
-    def UpdateThrusts(self, context: Context, output: BasicVector):
+    def UpdateThrusts(self, context: Context, discrete_state: DiscreteValues):
         # read current states from context
         x = self.drone_state_port.Eval(context)
         x0 = self.reference_state_port.Eval(context)
 
         u = self.u0 - self.K @ (x - x0) # calculate new thrusts
-        u = np.clip(u, a_min=config.prop_min_thrust, a_max=config.prop_max_thrust) # saturate thrusts
+        # u = np.clip(u, a_min=config.prop_min_thrust, a_max=config.prop_max_thrust) # saturate thrusts
 
-        output.SetFromVector(value=u) # set new thrusts
+        discrete_state.set_value(index=self.propeller_thrusts_index, value=u) # set new thrusts state
 
 ##### LQR DIAGRAM FUNCTION (creates LQR diagram block for given system)
 def ControlLQRDiagram(open_diagram: Diagram, initial_context: Context) -> Diagram:

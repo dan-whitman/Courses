@@ -85,10 +85,12 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
 
         xT[5] = xT[5] + config.target_height / 2
 
-        import numpy as np
         # print(f'{frame_time:.2f}', xT[3:6], xTe[3:6])
         # print(f'{frame_time:.2f}', pT, pTe)
-        print(f'{frame_time:.2f}', xTe[3:6], x0[2:6])
+        # print(f'{frame_time:.2f}', xTe[3:6], x0[3:6])
+        print(f'{frame_time:.2f}', u, x0[3:6])
+        # print(f'{frame_time:.2f}', config.Klqr @ (x - x0))
+        # print(f'{frame_time:.2f}', (x[6:9] - x0[6:9]))
 
         # adding frame to video
         if config.args.video == 1:

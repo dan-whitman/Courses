@@ -24,10 +24,10 @@ simulation_rate = 4.0 # ()
 
 frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
 
-drone_initial_position = np.array([-2.0, -4.0, 1.0]) # (m)
+drone_initial_position = np.array([-2.0, -4.0, 0.5]) # (m)
 drone_initial_rpy = RollPitchYaw(0.0, 0.0, np.pi/2) # (rad)
 
-# drone_initial_position = np.array([-2.0, 4.0, 1.0]) # (m)
+# drone_initial_position = np.array([-2.0, 4.0, 0.5]) # (m)
 # drone_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
 
 target_initial_position = np.array([0.5, 5.5, 0.0]) # (m)
@@ -39,7 +39,7 @@ target_motion_duration = simulation_duration # (s)
 obstacle_initial_position = np.array([2.0, -4.0, 0.0])
 obstacle_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0)
 
-drone_target_offset_position = np.array([-1.5, 1.5, 0.1]) # (m) desired drone offset from target
+drone_target_offset_position = np.array([-1.5, 1.5, 0.0]) # (m) desired drone offset from target
 
 ##### SAVE FILE NAMES
 vid_file_name = 'fpv_camera_' + user_name + '.avi'
@@ -58,11 +58,11 @@ target_height = 1.0 # (m)
 target_radius = 0.25 # (m)
 
 ##### CONTROL GAINS
-lqr_pos_gains = 50.0 # position control gains for lqr
-lqr_rpy_gains = 100.0 # rpy control gains for lqr
+lqr_pos_gains = 30.0 # position control gains for lqr
+lqr_rpy_gains = np.array([1.0, 1.0, 50.0]) # rpy control gains for lqr
 
-lqr_pos_vel_gains = 200.0 # linear velocity gains for lqr
-lqr_rot_vel_gains = 100.0 # rotational velocity gains for lqr
+lqr_pos_vel_gains = 100.0 # linear velocity gains for lqr
+lqr_rot_vel_gains = 50.0 # rotational velocity gains for lqr
 
 lqr_thrust_gains = 1.0 # propeller thrust gains for lqr
 
@@ -70,8 +70,10 @@ Kp_gain = 80 # proportional gain for PD
 Kd_gain = 30 # derivative gain for PD
 
 ##### DRAKE PARAMETERS
-static_friction = 0.01 # () world ground surface friction
-dynamic_friction = 0.01 # () world ground dynamic friction
+static_friction = 0.0 # () world ground surface friction
+dynamic_friction = 0.0 # () world ground dynamic friction
+penetration_allowance = 0.01 # (m) allowance between collidong bodies
+stiction_tolerance = 0.02 # (m/s) slip velocity threshold for coulomb friction
 
 triad_length = 0.15 # (m) for visualization
 triad_radius = 0.005 # (m) for visualization
@@ -114,6 +116,7 @@ target_index = None # target plant base index for control
 obstacle_instance = None # obstacle plant index for reference
 
 u0 = None # (N) reference equilibrium propeller thrusts
+Klqr = None # () calculated lqr matrix K
 
 camera_info = None # camera infomration
 X_DC = None # camera transform to drone body

@@ -60,12 +60,12 @@ if __name__ == '__main__':
     ScriptInit() # initialize the script with arguments
 
     # creating open-loop system
-    open_diagram = DroneDiagram(with_camera=True) # creating open-loop diagram
-    initial_context = DroneInitialContext(open_diagram=open_diagram, with_camera=True) # define open-loop initial context
+    open_diagram = DroneDiagram(full_plant=True) # creating open-loop diagram
+    initial_context = DroneInitialContext(open_diagram=open_diagram, full_plant=True) # define open-loop initial context
 
     # creating linearizable open-loop system for controller
-    open_linear_diagram = DroneDiagram(with_camera=False) # exclude camera for linearizability
-    initial_linear_context = DroneInitialContext(open_diagram=open_linear_diagram, with_camera=False) # excluded camera context
+    open_linear_diagram = DroneDiagram(full_plant=False) # exclude camera for linearizability
+    initial_linear_context = DroneInitialContext(open_diagram=open_linear_diagram, full_plant=False) # excluded camera context
 
     # creating closed-loop control system (CREATE CAMERA DIAGRAM FOR PROCESSING AND CONTROLLER DIAGRAM)
     control_diagram = ControlLQRDiagram(open_diagram=open_linear_diagram, initial_context=initial_linear_context) # create lqr controller

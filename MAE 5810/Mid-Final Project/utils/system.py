@@ -18,7 +18,7 @@ from utils.xacro import XacroToURDF
 from utils.control import ControlPDSystem
 
 ##### DRONE PLANT FUNCTION (creates hexrotor plant/scene graph objects)
-def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool) -> tuple[MultibodyPlant, SceneGraph]:
+def DronePlantScene(builder: DiagramBuilder, time_step: float, full_plant: bool) -> tuple[MultibodyPlant, SceneGraph]:
     print(f'\n=====CREATING DRONE PLANT=====')
 
     # creating the plant and scene graph
@@ -30,30 +30,30 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool
     # extracting constants
     config.g_mag = np.linalg.norm(plant.gravity_field().gravity_vector())
 
-    # adding floor to world
-    X_WG = RigidTransform.Identity() # identity transform
-
-    proximity_properties = ProximityProperties()
-    surface_friction = CoulombFriction(static_friction=config.static_friction, dynamic_friction=config.dynamic_friction) # floor friction
-    AddContactMaterial(friction=surface_friction, properties=proximity_properties)
-
-    plant.set_penetration_allowance(penetration_allowance=0.01) # loosen tolerance to increase solving speed
-    plant.set_stiction_tolerance(v_stiction=0.02) # loosen tolerance to increase solving speed
-
-    plant.RegisterCollisionGeometry(
-        body=plant.world_body(), X_BG=X_WG, shape=HalfSpace(), name='ground_collision', properties=proximity_properties
-    )
-
-    # adding models to plant
+    # adding drone to plant
     Drone = XacroToURDF(str(config.MOD_DIR / 'FPVDrone.urdf.xacro'))
-    if with_camera: # if using total model
-        Target = XacroToURDF(str(config.MOD_DIR / 'Target.urdf.xacro')) # only add target for complete plant
-        Obstacle = XacroToURDF(str(config.MOD_DIR / 'Obstacle.urdf.xacro')) # only add obstacle for complete plant
-
     config.drone_instance = parser.AddModelsFromString(file_contents=Drone, file_type='urdf')[0]
-    if with_camera: # if using total model
+
+    # constructing the full plant
+    if full_plant:
+        # adding floor to plant
+        proximity_properties = ProximityProperties()
+        surface_friction = CoulombFriction(static_friction=config.static_friction, dynamic_friction=config.dynamic_friction) # floor friction
+        AddContactMaterial(friction=surface_friction, properties=proximity_properties)
+
+        plant.set_penetration_allowance(penetration_allowance=config.penetration_allowance) # loosen tolerance to increase solving speed
+        plant.set_stiction_tolerance(v_stiction=config.stiction_tolerance) # loosen tolerance to increase solving speed
+
+        plant.RegisterCollisionGeometry(
+            body=plant.world_body(), X_BG=RigidTransform.Identity(), shape=HalfSpace(), name='ground_collision', properties=proximity_properties
+        )
+
+        # adding other models to plant
+        Target = XacroToURDF(str(config.MOD_DIR / 'Target.urdf.xacro')) # only add target for complete plant
+        # Obstacle = XacroToURDF(str(config.MOD_DIR / 'Obstacle.urdf.xacro')) # only add obstacle for complete plant
+
         config.target_instance = parser.AddModelsFromString(file_contents=Target, file_type='urdf')[0] # only add target for complete plant
-        config.obstacle_instance = parser.AddModelsFromString(file_contents=Obstacle, file_type='urdf')[0] # only add obstacle for complete plant
+        # config.obstacle_instance = parser.AddModelsFromString(file_contents=Obstacle, file_type='urdf')[0] # only add obstacle for complete plant
 
         config.target_index = plant.GetBodyByName(name='target_base').index() # get target base index
 
@@ -61,7 +61,7 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float, with_camera: bool
     plant.SetBaseBodyJointType(joint_type=BaseBodyJointType.kRpyFloatingJoint)
 
     # adding visualization frames
-    if config.args.frames: # if adding visual frames
+    if full_plant and config.args.frames: # if adding visual frames
         plant, scene_graph = VisualPlantSceneFrames(plant=plant, scene_graph=scene_graph)
 
     plant.Finalize() # finalize the plant
@@ -82,10 +82,8 @@ def DronePropellers(plant: MultibodyPlant) -> Propeller:
         thrust_ratio = config.prop_thrust_ratio # thrust ratio for propeller
         moment_ratio = config.prop_moment_ratio * (-1)**i # moment ratio for propeller (positive and negative to signify direction of spin)
 
-        X_RP = RigidTransform.Identity() # identity transform
-
         # add to propeller list
-        drone_prop_info.append(PropellerInfo(body_index=rotor_prop_body.index(), X_BP=X_RP, thrust_ratio=thrust_ratio, moment_ratio=moment_ratio)) # propeller for split
+        drone_prop_info.append(PropellerInfo(body_index=rotor_prop_body.index(), X_BP=RigidTransform.Identity(), thrust_ratio=thrust_ratio, moment_ratio=moment_ratio)) # propeller for split
 
     # return completed propeller list
     return Propeller(drone_prop_info)
@@ -150,36 +148,35 @@ def DroneTargetDiagram() -> Diagram:
     return target_builder.Build()
 
 ##### DRONE DIAGRAM FUNCTION (creates open-loop hexrotor diagram)
-def DroneDiagram(with_camera: bool) -> Diagram:
+def DroneDiagram(full_plant: bool) -> Diagram:
     print(f'\n=====CREATING DRONE DIAGRAM=====')
 
     # initiating the builder
     open_builder = DiagramBuilder()
 
     # creating plant and scene graph
-    plant, scene_graph = DronePlantScene(builder=open_builder, time_step=0.0, with_camera=with_camera)
+    plant, scene_graph = DronePlantScene(builder=open_builder, time_step=0.0, full_plant=full_plant)
 
     # creating the propellers
     propellers = open_builder.AddNamedSystem(name='propellers', system=DronePropellers(plant=plant))
-
-    # creating the camera
-    if with_camera:
-        DroneCamera(builder=open_builder, plant=plant, scene_graph=scene_graph)
-        camera = open_builder.GetSubsystemByName(name='rgbd_sensor_drone_camera')
 
     # extracting constants
     config.q_num = plant.num_positions(model_instance=config.drone_instance) # number of state coordinates
     config.v_num = plant.num_velocities(model_instance=config.drone_instance) # number of state velocities
     config.u_num = propellers.get_command_input_port().size() # number of control inputs
 
-    if with_camera: 
+    # creating the full diagram
+    if full_plant:
+        DroneCamera(builder=open_builder, plant=plant, scene_graph=scene_graph)
+        camera = open_builder.GetSubsystemByName(name='rgbd_sensor_drone_camera')
+
         config.qT_num = plant.num_positions(model_instance=config.target_instance) # number of target state coordinates
         config.vT_num = plant.num_velocities(model_instance=config.target_instance) # number of target velocity coordinates
 
     # wiring the diagram
     open_builder.Connect(plant.get_body_poses_output_port(), propellers.get_body_poses_input_port())
 
-    if not with_camera: # if only using the drone
+    if not full_plant: # if only using the drone
         open_builder.Connect(propellers.get_spatial_forces_output_port(), plant.get_applied_spatial_force_input_port())
 
     else: # else with the full plant
@@ -196,7 +193,7 @@ def DroneDiagram(with_camera: bool) -> Diagram:
     
     open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.drone_instance), name='drone_state') # drone output
     open_builder.ExportOutput(output=scene_graph.get_query_output_port(), name='geometry_query') # geometry output
-    if with_camera:
+    if full_plant:
         open_builder.ExportOutput(output=plant.get_state_output_port(model_instance=config.target_instance), name='target_state') # target output
         open_builder.ExportOutput(output=camera.color_image_output_port(), name='color_image') # camera color image
         open_builder.ExportOutput(output=camera.depth_image_32F_output_port(), name='depth_image') # camera depth image
@@ -205,7 +202,7 @@ def DroneDiagram(with_camera: bool) -> Diagram:
     return open_builder.Build()
 
 ##### DRONE INITIAL CONTEXT FUNCTION (creates initial context for diagram)
-def DroneInitialContext(open_diagram: Diagram, with_camera: bool) -> Context:
+def DroneInitialContext(open_diagram: Diagram, full_plant: bool) -> Context:
     print(f'\n=====CREATING DRONE INITIAL CONTEXT=====')
 
     # creating contexts
@@ -221,14 +218,14 @@ def DroneInitialContext(open_diagram: Diagram, with_camera: bool) -> Context:
     plant.SetFreeBodyPose(context=plant_context, body=drone_body, X_JpJc=X_WD) # placing hexrotor
 
     # placing the target and extracting camera information (only for complete plant)
-    if with_camera:
+    if full_plant:
         target_body = plant.GetBodyByName(name='target_base')
         X_WT = RigidTransform(rpy=config.target_initial_rpy, p=config.target_initial_position) # target transform
         plant.SetFreeBodyPose(context=plant_context, body=target_body, X_JpJc=X_WT) # placing target
 
-        obstacle_body = plant.GetBodyByName(name='obstacle_base')
-        X_WO = RigidTransform(rpy=config.obstacle_initial_rpy, p=config.obstacle_initial_position) # obstacle transform
-        plant.SetFreeBodyPose(context=plant_context, body=obstacle_body, X_JpJc=X_WO) # placing obstacle
+        # obstacle_body = plant.GetBodyByName(name='obstacle_base')
+        # X_WO = RigidTransform(rpy=config.obstacle_initial_rpy, p=config.obstacle_initial_position) # obstacle transform
+        # plant.SetFreeBodyPose(context=plant_context, body=obstacle_body, X_JpJc=X_WO) # placing obstacle
 
         camera_body = plant.GetBodyByName(name='drone_camera') # finding camera
         config.X_DC = plant.CalcRelativeTransform(context=plant_context, frame_A=drone_body.body_frame(), frame_B=camera_body.body_frame()) # extracting transform
