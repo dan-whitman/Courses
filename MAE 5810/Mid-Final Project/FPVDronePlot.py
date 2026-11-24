@@ -51,7 +51,7 @@ def PlotTargetPixels(t: np.ndarray, data: list) -> plt.Figure:
     pTe_nanbins = PlotVBinIdx(idx=pTe_nanidx) # estimated nan bins
 
     # creating figure
-    fig = plt.figure(f'Target Pixels Plot', figsize=(7, 5))
+    fig = plt.figure(f'Target Pixels Plot', figsize=(16, 9))
     fig.suptitle(fr'Target Pixels ($p_T$ and $p_T^e$) versus Time')
 
     # plotting data
@@ -94,7 +94,7 @@ def PlotTargetPositions(t: np.ndarray, data: list) -> plt.Figure:
     xTe_nanbins = PlotVBinIdx(idx=xTe_nanidx) # estimated nan bins
 
     # creating figure
-    fig = plt.figure(f'Target Positions Plot', figsize=(7, 5))
+    fig = plt.figure(f'Target Positions Plot', figsize=(16, 9))
     fig.suptitle(fr'Target Positions ($x_T$ and $x_T^e$) versus Time')
 
     # plotting data
@@ -156,7 +156,7 @@ def PlotTargetVelocities(t: np.ndarray, data: list) -> plt.Figure:
     xTe_nanbins = PlotVBinIdx(idx=xTe_nanidx) # estimated nan bins
 
     # creating figure
-    fig = plt.figure(f'Target Velocities Plot', figsize=(7, 5))
+    fig = plt.figure(f'Target Velocities Plot', figsize=(16, 9))
     fig.suptitle(fr'Target Velocities ($\dot x_T$ and $\dot x_T^e$) versus Time')
 
     # plotting data
@@ -219,7 +219,7 @@ def PlotDroneReference(t: np.ndarray, data: list) -> plt.Figure:
     xTe_nanbins = PlotVBinIdx(idx=xTe_nanidx) # estimated nan bins
 
     # creating figure
-    fig = plt.figure(f'Drone Reference Plot', figsize=(7, 5))
+    fig = plt.figure(f'Drone Reference Plot', figsize=(16, 9))
     fig.suptitle(fr'Drone State, Reference, and Estimated Target State ($x$, $x_0$, and $x_T^e$) versus Time')
 
     # plotting data
