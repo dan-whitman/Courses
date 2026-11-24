@@ -94,7 +94,7 @@ def PlotTargetPositions(t: np.ndarray, data: list) -> plt.Figure:
     xTe_nanbins = PlotVBinIdx(idx=xTe_nanidx) # estimated nan bins
 
     # creating figure
-    fig = plt.figure(f'Target Positions Plot', figsize=(16, 9))
+    fig = plt.figure(f'Target Positions Plot', figsize=(1,2))
     fig.suptitle(fr'Target Positions ($x_T$ and $x_T^e$) versus Time')
 
     # plotting data
