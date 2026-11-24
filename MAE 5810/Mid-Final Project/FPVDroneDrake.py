@@ -95,14 +95,3 @@ if __name__ == '__main__':
     VisualHold()
 
     print(f'=====CLOSING SCRIPT=====')
-
-
-'''
-# plotting results
-if args.figures == 1: # if outputting figures
-    plotdata = [times, camera_headings, us, vs, camera_width, camera_height] # combining data to pass to function (bad way to do this, rethink later)
-    figheadings, figtargetpixels = PlotData(plotdata=plotdata) # plotting figures
-
-    figheadings.savefig(str(FIG_DIR / heading_file_name), dpi=300, bbox_inches='tight')
-    figtargetpixels.savefig(str(FIG_DIR / pixel_file_name), dpi=300, bbox_inches='tight')
-'''
