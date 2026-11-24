@@ -3,11 +3,13 @@ from pydrake.systems.framework import DiagramBuilder, Diagram, Context
 from pydrake.systems.analysis import Simulator
 
 ##### OTHER IMPORTS
+import numpy as np
 import cv2
 
 ##### SELF_DEFINED IMPORTS
 import inputs.config as config
 from utils.visual import VisualInit, VisualStart, VisualStop
+from utils.video import VideoFrame
 
 ##### SIMULATION DIAGRAM FUNCTION (inputs closed diagram and adds visualizer for simulation)
 def SimDiagram(closed_diagram: Diagram) -> Diagram:
@@ -64,7 +66,7 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
     # creating video output
     if config.args.video == 1: # if outputting video
         config.video = cv2.VideoWriter(
-            filename=str(config.VID_DIR / config.vid_file_name), apiPreference=0, fourcc=cv2.VideoWriter_fourcc(*'MJPG'), fps=config.camera_fps, frameSize=(config.camera_width, config.camera_height)
+            filename=str(config.VID_DIR / 'fpv_camera.avi'), apiPreference=0, fourcc=cv2.VideoWriter_fourcc(*'MJPG'), fps=config.camera_fps, frameSize=(config.camera_width, config.camera_height)
         )
 
     # running simulation
@@ -81,22 +83,27 @@ def SimRun(sim_diagram: Diagram, sim_context: Context) -> None:
         pTe = sim_diagram.GetOutputPort(port_name='target_estimate_pixels').Eval(sim_context) # evaluate estimated target pixels in camera
         rgba = sim_diagram.GetOutputPort(port_name='frame_image').Eval(sim_context) # get camera frame image
 
-        # DO STUFF HERE (LOG DATA)
+        # log and process data
+        xT[5] = xT[5] + config.target_height / 2 # update so that center (z) of target is logged
 
-        xT[5] = xT[5] + config.target_height / 2
+        config.t_log = np.append(config.t_log, frame_time)
+        config.x_log = np.append(config.x_log, x)
+        config.xT_log = np.append(config.xT_log, xT)
+        config.x0_log = np.append(config.x0_log, x0)
+        config.u_log = np.append(config.u_log, u)
+        config.xTe_log = np.append(config.xTe_log, xTe)
+        config.pT_log = np.append(config.pT_log, pT)
+        config.pTe_log = np.append(config.pTe_log, pTe)
 
+        # printing (DEBUGGING)
+        print(f'{frame_time:.2f}')
         # print(f'{frame_time:.2f}', xT[3:6], xTe[3:6])
         # print(f'{frame_time:.2f}', pT, pTe)
         # print(f'{frame_time:.2f}', xTe[3:6], x0[3:6])
-        print(f'{frame_time:.2f}', u, x0[3:6])
-        # print(f'{frame_time:.2f}', config.Klqr @ (x - x0))
-        # print(f'{frame_time:.2f}', (x[6:9] - x0[6:9]))
+        # print(f'{frame_time:.2f}', u, x0[3:6])
 
         # adding frame to video
-        if config.args.video == 1:
-            rgb = rgba[:,:,:3] # remove alpha channel from data
-            bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR) # convert to bgr color for opencv
-            config.video.write(bgr) # add frame to video
+        if config.args.video == 1: VideoFrame(rgba=rgba)
 
     # end visualization
     VisualStop()

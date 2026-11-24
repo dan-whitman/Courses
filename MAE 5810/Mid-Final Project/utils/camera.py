@@ -10,7 +10,7 @@ import cv2
 
 ##### SELF-DEFINED IMPORTS
 import inputs.config as config
-from utils.video import VideoWritePoint
+from utils.video import VideoWriteCircle, VideoHSV, VideoWriteRect
 
 ##### CAMERA SYSTEM DEFINITION (LeafSystem for camera)
 class CameraSystem(LeafSystem):
@@ -40,6 +40,8 @@ class CameraSystem(LeafSystem):
         )
         self.Kinv = np.linalg.inv(self.K) # intrinsic inverse camera matrix
 
+        self.previous_xTe = None # previous stored target state estimate for velocity approximation
+        self.previous_x0 = np.zeros(config.q_num + config.v_num) # previous stored reference state for tracking
         self.previous_image = None # previous stored camera color image for optical flow
 
         # declaring internal states     
@@ -100,13 +102,28 @@ class CameraSystem(LeafSystem):
             pT[:] = np.full(3, np.nan) # update to nan
 
         # update estimated pixels
-        # do cv2 bounding box stuff to figure out what estimate target state is (IMPLEMENT LATER)
-        # need to make uTe,vTe,wTe nan if target is out of camera (bounding box is not wide/tall enough or no bounding box found)
-        pTe[0:3] = pT[0:3] # DIRECT COPY (CHANGE LATER)
+        hsv = VideoHSV(rgba=color_image) # convert to hsv
+        mask_lower = cv2.inRange(hsv, np.array([0, 100, 100], dtype=np.uint8), np.array([10, 255, 255], dtype=np.uint8)) # lower mask region
+        mask_upper = cv2.inRange(hsv, np.array([170, 100, 100], dtype=np.uint8), np.array([179, 255, 255], dtype=np.uint8)) # upper mask region
+        mask = cv2.bitwise_or(mask_lower, mask_upper) # create total mask
 
-        # if not (np.isnan(pTe).any() or np.isinf(pTe).any()): # if there are valid pixel estimates
-        #     pTe[2] = depth_image.at(x=int(pTe[0]), y=int(pTe[1]))[0] + config.target_radius # extract depth and compensate for target size
-        # else: pTe[2] = np.nan # target not found or valid
+        xr = np.nan # no valid coordinates initially
+        yr = np.nan # no valid coordinates initially
+        wr = np.nan # no valid coordindates initially
+        hr = np.nan # no valid coordindates initially
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # find contours in mask
+        if contours: # if there are contours
+            max_contour = max(contours, key=cv2.contourArea) # find maximum contour
+            if cv2.contourArea(max_contour) > 20: # if contour is large enough
+                xr, yr, wr, hr = cv2.boundingRect(max_contour) # find bounding box dimensions
+
+        pTe[0] = xr + wr / 2 # find estimated target x COM
+        pTe[1] = yr + hr / 2 # find estimated target y COM
+
+        if not (np.isnan(pTe[0:2]).any() or np.isinf(pTe[0:2]).any()): # if there are valid pixel estimates
+            pTe[2] = depth_image.at(x=int(pTe[0]), y=int(pTe[1]))[0] + config.target_radius # extract depth and compensate for target size
+        else: pTe[2] = np.nan # target not found or valid
 
         # updating target estimate state
         pTe_vec = np.array([pTe[0] * pTe[2], pTe[1] * pTe[2], pTe[2], 1]) # create pixel vector
@@ -118,10 +135,19 @@ class CameraSystem(LeafSystem):
         else:
             xTe[3:6] = np.nan # target is not valid or found
 
-        # do optical flow stuff to figure out what estimate target velocity is (IMPLEMENT LATER)
+        # update target velocity estimate (OPTICAL FLOW, IMPLEMENT LATER)
         if self.previous_image is not None:
-            # do optical flow with cv2 (IMPLEMENT LATER)
+            # OPTICAL FLOW STUFF HERE (IMPLEMENT LATER)
             pass
+
+        xTe[config.qT_num:] = 0 # initialize to all 0
+        
+        if not (np.isnan(xTe).any() or np.isinf(xTe).any()): # if there are valid target estimates
+            if self.previous_xTe is not None:
+                vTe_vec = (xTe[:config.qT_num] - self.previous_xTe[:config.qT_num]) / self.dt # estimate target velocities
+                xTe[config.qT_num:] = vTe_vec # update state target estimate
+
+        self.previous_xTe = np.copy(xTe) # update stored target state estimate
 
         # update drone reference state
         x0[:] = 0 # initialize to all 0
@@ -134,14 +160,17 @@ class CameraSystem(LeafSystem):
             r = xTe[3:6] - x[3:6] # find displacement vector from x to xT
             yaw = np.atan2(r[1], r[0]) # find desired yaw angle for keeping target in view
             x0[2] = yaw # set the reference yaw angle for the drone
+
+            self.previous_x0 = np.copy(x0) # set old reference
         else:
-            x0[2:6] = x[2:6] # remain stationary (yaw and position)
+            x0[:] = self.previous_x0[:] # track last known position (or go to origin)
 
         # save images and update video frames
         self.previous_image = color_image # store last image
             
-        color_image = VideoWritePoint(rgba=color_image, coords=np.array([pT[0], pT[1]]), color=(0, 0, 0), radius=6, thickness=2) # true target COM position
-        color_image = VideoWritePoint(rgba=color_image, coords=np.array([pTe[0], pTe[1]]), color=(0, 200, 200), radius=10, thickness=2) # estimated target COM position
+        color_image = VideoWriteCircle(rgba=color_image, coords=np.array([pT[0], pT[1]]), color=(0, 0, 0), radius=5, thickness=1) # true target COM position
+        color_image = VideoWriteCircle(rgba=color_image, coords=np.array([pTe[0], pTe[1]]), color=(0, 200, 200), radius=8, thickness=1) # estimated target COM position
+        color_image = VideoWriteRect(rgba=color_image, coords=np.array([xr, yr]), color=(0, 255, 0), dims=(wr, hr), thickness=2) # target bounding box
 
         # update stored image state
         state.get_mutable_abstract_state(index=self.frame_image_index).set_value(color_image)

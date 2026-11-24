@@ -9,7 +9,6 @@ export PYTHONPATH="/opt/drake/lib/python$(python3 -c 'import sys; print("{0}.{1}
 # from pydrake.all import 
 
 ##### OTHER IMPORTS
-import numpy as np
 from pathlib import Path
 
 ##### SELF-DEFINED IMPORTS
@@ -20,9 +19,7 @@ from utils.camera import CameraDiagram
 from utils.simulate import SimDiagram, SimContext, SimRun
 from utils.visual import VisualHold
 from utils.print import PrintCamera
-
-# from utils.figure import PlotData
-# from utils.video import WriteVideoText, WriteVideoPoint
+from utils.logging import LogSave
 
 ##### SCRIPT INITIALIZATION FUNCTION (initializes commands and config args)
 def ScriptInit() -> None:
@@ -64,11 +61,10 @@ if __name__ == '__main__':
     initial_context = DroneInitialContext(open_diagram=open_diagram, full_plant=True) # define open-loop initial context
 
     # creating linearizable open-loop system for controller
-    open_linear_diagram = DroneDiagram(full_plant=False) # exclude camera for linearizability
-    initial_linear_context = DroneInitialContext(open_diagram=open_linear_diagram, full_plant=False) # excluded camera context
+    open_drone_diagram = DroneDiagram(full_plant=False) # exclude camera for linearizability
 
     # creating closed-loop control system (CREATE CAMERA DIAGRAM FOR PROCESSING AND CONTROLLER DIAGRAM)
-    control_diagram = ControlLQRDiagram(open_diagram=open_linear_diagram, initial_context=initial_linear_context) # create lqr controller
+    control_diagram = ControlLQRDiagram(open_diagram=open_drone_diagram) # create lqr controller
     camera_diagram = CameraDiagram() # create camera diagram
 
     closed_diagram = ControlDiagram(open_diagram=open_diagram, control_diagram=control_diagram, camera_diagram=camera_diagram) # create closed-loop diagram
@@ -84,6 +80,16 @@ if __name__ == '__main__':
 
     # exporting data
     if config.args.video == 1: config.video.release() # save video
+
+    if config.args.data == 1: # if saving data
+        LogSave(data=config.t_log, cols=len(config.t_log), filename='t_log.npy')
+        LogSave(data=config.x_log, cols=len(config.t_log), filename='x_log.npy')
+        LogSave(data=config.xT_log, cols=len(config.t_log), filename='xT_log.npy')
+        LogSave(data=config.x0_log, cols=len(config.t_log), filename='x0_log.npy')
+        LogSave(data=config.u_log, cols=len(config.t_log), filename='u_log.npy')
+        LogSave(data=config.xTe_log, cols=len(config.t_log), filename='xTe_log.npy')
+        LogSave(data=config.pT_log, cols=len(config.t_log), filename='pT_log.npy')
+        LogSave(data=config.pTe_log, cols=len(config.t_log), filename='pTe_log.npy')
     
     # holding visualization open
     VisualHold()
@@ -92,15 +98,6 @@ if __name__ == '__main__':
 
 
 '''
-##### OUTPUTTING DATA
-print(f'\n=====SAVING RESULTS=====')
-
-# exporting data
-if args.data == 1: # if outputting data
-    np.savez(str(DAT_DIR / data_file_name), 
-        times=times, drone_positions=drone_positions, drone_rpys=drone_rpys, drone_velocities=drone_velocities, drone_w_velocities=drone_w_velocities
-    )
-
 # plotting results
 if args.figures == 1: # if outputting figures
     plotdata = [times, camera_headings, us, vs, camera_width, camera_height] # combining data to pass to function (bad way to do this, rethink later)

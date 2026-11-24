@@ -9,8 +9,6 @@ from pathlib import Path
 ##### SELF-DEFINED IMPORTS
 
 ##### USER INPUTS
-user_name = 'DAN'
-
 camera_width = 640 # (px)
 camera_height = 480 # (px)
 camera_fps = 15 # (fps)
@@ -27,9 +25,6 @@ frame_times = np.arange(0.0, simulation_duration, 1.0 / camera_fps)
 drone_initial_position = np.array([-2.0, -4.0, 0.5]) # (m)
 drone_initial_rpy = RollPitchYaw(0.0, 0.0, np.pi/2) # (rad)
 
-# drone_initial_position = np.array([-2.0, 4.0, 0.5]) # (m)
-# drone_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
-
 target_initial_position = np.array([0.5, 5.5, 0.0]) # (m)
 target_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0) # (rad)
 target_final_position = np.array([15.0, -2.0, 0.0]) # (m)
@@ -39,13 +34,7 @@ target_motion_duration = simulation_duration # (s)
 obstacle_initial_position = np.array([2.0, -4.0, 0.0])
 obstacle_initial_rpy = RollPitchYaw(0.0, 0.0, 0.0)
 
-drone_target_offset_position = np.array([-1.5, 1.5, 0.0]) # (m) desired drone offset from target
-
-##### SAVE FILE NAMES
-vid_file_name = 'fpv_camera_' + user_name + '.avi'
-heading_file_name = 'camera_heading_' + user_name
-pixel_file_name = 'pixel_measurement_' + user_name
-data_file_name = 'model_data_' + user_name
+drone_target_offset_position = np.array([-2.0, 2.0, 0.0]) # (m) desired drone offset from target
 
 ##### DRONE INFORMATION
 prop_thrust_ratio = 1.0 # ()
@@ -58,11 +47,11 @@ target_height = 1.0 # (m)
 target_radius = 0.25 # (m)
 
 ##### CONTROL GAINS
-lqr_pos_gains = 30.0 # position control gains for lqr
-lqr_rpy_gains = np.array([1.0, 1.0, 50.0]) # rpy control gains for lqr
+lqr_pos_gains = 20.0 # position control gains for lqr
+lqr_rpy_gains = np.array([1.0, 1.0, 100.0]) # rpy control gains for lqr
 
-lqr_pos_vel_gains = 100.0 # linear velocity gains for lqr
-lqr_rot_vel_gains = 50.0 # rotational velocity gains for lqr
+lqr_pos_vel_gains = 200.0 # linear velocity gains for lqr
+lqr_rot_vel_gains = 100.0 # rotational velocity gains for lqr
 
 lqr_thrust_gains = 1.0 # propeller thrust gains for lqr
 
@@ -83,7 +72,6 @@ argparser = argparse.ArgumentParser(description='HexRotor Simulation Model') # c
 
 argparser.add_argument('-f', '--frames', type=int, required=False, default=0, help='(1) for model frame visibility, (!=1) for no frames')
 argparser.add_argument('-v', '--video', type=int, required=False, default=1, help='(1) for simulation video output, (!=1) for no video')
-argparser.add_argument('-g', '--figures', type=int, required=False, default=1, help='(1) for figure outputs, (!=1) for no figures')
 argparser.add_argument('-d', '--data', type=int, required=False, default=1, help='(1) for data output, (!=1) for no data')
 
 ##### SCRIPT DIRECTORIES
@@ -116,10 +104,18 @@ target_index = None # target plant base index for control
 obstacle_instance = None # obstacle plant index for reference
 
 u0 = None # (N) reference equilibrium propeller thrusts
-Klqr = None # () calculated lqr matrix K
 
 camera_info = None # camera infomration
 X_DC = None # camera transform to drone body
 
 meshcat = None # meshcat instance
 video = None # video instance
+
+t_log = np.array([]) # empty time log 
+x_log = np.array([]) # empty state log
+xT_log = np.array([]) # empty target state log
+x0_log = np.array([]) # empty reference state log
+u_log = np.array([]) # empty thrust log
+xTe_log = np.array([]) # empty estimate target state log
+pT_log = np.array([]) # empty target pixels log
+pTe_log = np.array([]) # empty estimate target pixels log

@@ -50,10 +50,10 @@ def DronePlantScene(builder: DiagramBuilder, time_step: float, full_plant: bool)
 
         # adding other models to plant
         Target = XacroToURDF(str(config.MOD_DIR / 'Target.urdf.xacro')) # only add target for complete plant
-        # Obstacle = XacroToURDF(str(config.MOD_DIR / 'Obstacle.urdf.xacro')) # only add obstacle for complete plant
+        Obstacle = XacroToURDF(str(config.MOD_DIR / 'Obstacle.urdf.xacro')) # only add obstacle for complete plant
 
         config.target_instance = parser.AddModelsFromString(file_contents=Target, file_type='urdf')[0] # only add target for complete plant
-        # config.obstacle_instance = parser.AddModelsFromString(file_contents=Obstacle, file_type='urdf')[0] # only add obstacle for complete plant
+        config.obstacle_instance = parser.AddModelsFromString(file_contents=Obstacle, file_type='urdf')[0] # only add obstacle for complete plant
 
         config.target_index = plant.GetBodyByName(name='target_base').index() # get target base index
 
@@ -223,9 +223,9 @@ def DroneInitialContext(open_diagram: Diagram, full_plant: bool) -> Context:
         X_WT = RigidTransform(rpy=config.target_initial_rpy, p=config.target_initial_position) # target transform
         plant.SetFreeBodyPose(context=plant_context, body=target_body, X_JpJc=X_WT) # placing target
 
-        # obstacle_body = plant.GetBodyByName(name='obstacle_base')
-        # X_WO = RigidTransform(rpy=config.obstacle_initial_rpy, p=config.obstacle_initial_position) # obstacle transform
-        # plant.SetFreeBodyPose(context=plant_context, body=obstacle_body, X_JpJc=X_WO) # placing obstacle
+        obstacle_body = plant.GetBodyByName(name='obstacle_base')
+        X_WO = RigidTransform(rpy=config.obstacle_initial_rpy, p=config.obstacle_initial_position) # obstacle transform
+        plant.SetFreeBodyPose(context=plant_context, body=obstacle_body, X_JpJc=X_WO) # placing obstacle
 
         camera_body = plant.GetBodyByName(name='drone_camera') # finding camera
         config.X_DC = plant.CalcRelativeTransform(context=plant_context, frame_A=drone_body.body_frame(), frame_B=camera_body.body_frame()) # extracting transform
