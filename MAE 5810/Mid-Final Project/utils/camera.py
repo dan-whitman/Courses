@@ -144,8 +144,12 @@ class CameraSystem(LeafSystem):
         
         if not (np.isnan(xTe).any() or np.isinf(xTe).any()): # if there are valid target estimates
             if self.previous_xTe is not None:
-                vTe_vec = (xTe[:config.qT_num] - self.previous_xTe[:config.qT_num]) / self.dt # estimate target velocities
-                xTe[config.qT_num:] = vTe_vec # update state target estimate
+                if not (np.isnan(self.previous_xTe).any() or np.isinf(self.previous_xTe).any()):
+                    vTe_vec = (xTe[:config.qT_num] - self.previous_xTe[:config.qT_num]) / self.dt # estimate target velocities
+                    xTe[config.qT_num:] = vTe_vec # update state target estimate
+        else: 
+            if self.previous_xTe is not None:
+                xTe[config.qT_num:] = self.previous_xTe[config.qT_num:] # store last known velocities
 
         self.previous_xTe = np.copy(xTe) # update stored target state estimate
 
@@ -153,19 +157,23 @@ class CameraSystem(LeafSystem):
         x0[:] = 0 # initialize to all 0
         
         if not (np.isnan(xTe).any() or np.isinf(xTe).any()): # if there are valid target estimates
-            x0[3] = xTe[3] + config.drone_target_offset_position[0] # set the reference x coordinate for the drone
-            x0[4] = xTe[4] + config.drone_target_offset_position[1] # set the reference y coordinate for the drone
-            x0[5] = xTe[5] + config.drone_target_offset_position[2] # set the reference z coordinate for the drone  
+            x0[3:6] = xTe[3:6] + config.drone_target_offset_position # set the reference coordinates for the drone
 
-            # x0[config.q_num + 3:] = xTe[config.qT_num + 3:] # update desired reference position velocities          
+            # x0[config.q_num + 3:] = xTe[config.qT_num + 3:] # update desired reference position velocities (IGNORE) 
 
-            r = xTe[3:6] - x[3:6] # find displacement vector from x to xT
+            r = xTe[3:6] - x[3:6] # find displacement vector from x to xTe
+            yaw = np.atan2(r[1], r[0]) # find desired yaw angle for keeping target in view
+            x0[2] = yaw # set the reference yaw angle for the drone
+        else:
+            x0[:] = self.previous_x0[:] # track last known position (or go to origin)
+
+            r = x0[3:6] - config.drone_target_offset_position -x[3:6] # find estimated displacement vector from x to xTe
             yaw = np.atan2(r[1], r[0]) # find desired yaw angle for keeping target in view
             x0[2] = yaw # set the reference yaw angle for the drone
 
-            self.previous_x0 = np.copy(x0) # set old reference
-        else:
-            x0[:] = self.previous_x0[:] # track last known position (or go to origin)
+            x0[:config.q_num] += self.previous_xTe[config.qT_num:] * self.dt # update reference position based on last known target velocity
+
+        self.previous_x0 = np.copy(x0) # set old reference
 
         # save images and update video frames
         self.previous_image = color_image # store last image
