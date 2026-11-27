@@ -68,7 +68,7 @@ triad_length = 0.15 # (m) for visualization
 triad_radius = 0.005 # (m) for visualization
 
 ##### SCRIPT ARGUMENTS
-argparser = argparse.ArgumentParser(description='HexRotor Simulation Model') # creating parser
+argparser = argparse.ArgumentParser(description='FPV Drone Simulation Model') # creating parser
 
 argparser.add_argument('-f', '--frames', type=int, required=False, default=0, help='(1) for model frame visibility, (!=1) for no frames')
 argparser.add_argument('-v', '--video', type=int, required=False, default=1, help='(1) for simulation video output, (!=1) for no video')
