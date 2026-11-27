@@ -155,7 +155,9 @@ class CameraSystem(LeafSystem):
         if not (np.isnan(xTe).any() or np.isinf(xTe).any()): # if there are valid target estimates
             x0[3] = xTe[3] + config.drone_target_offset_position[0] # set the reference x coordinate for the drone
             x0[4] = xTe[4] + config.drone_target_offset_position[1] # set the reference y coordinate for the drone
-            x0[5] = xTe[5] + config.drone_target_offset_position[2] # set the reference z coordinate for the drone            
+            x0[5] = xTe[5] + config.drone_target_offset_position[2] # set the reference z coordinate for the drone  
+
+            # x0[config.q_num + 3:] = xTe[config.qT_num + 3:] # update desired reference position velocities          
 
             r = xTe[3:6] - x[3:6] # find displacement vector from x to xT
             yaw = np.atan2(r[1], r[0]) # find desired yaw angle for keeping target in view
