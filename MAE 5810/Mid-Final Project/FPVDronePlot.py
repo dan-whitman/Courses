@@ -219,13 +219,13 @@ def PlotDroneReference(t: np.ndarray, data: list) -> plt.Figure:
     xTe_nanbins = PlotVBinIdx(idx=xTe_nanidx) # estimated nan bins
 
     # creating figure
-    fig = plt.figure(f'Drone Reference Plot', figsize=(16, 9))
-    fig.suptitle(fr'Drone State, Reference, and Estimated Target State ($x$, $x_0$, and $x_T^e$) versus Time')
+    fig = plt.figure(f'Quadrotor Reference Plot', figsize=(16, 9))
+    fig.suptitle(fr'Quadrotor State, Reference, and Estimated Target State ($x$, $x_0$, and $x_T^e$) versus Time')
 
     # plotting data
     ax = fig.add_subplot(2, 2, 1)
 
-    ax.plot(t, x[3,:], linestyle='-', color='#ff0000', label=fr'Drone $x$')
+    ax.plot(t, x[3,:], linestyle='-', color='#ff0000', label=fr'Quadrotor $x$')
     ax.plot(t, x0[3,:], linestyle='-', color='#00aa00', label=fr'Reference $x$')
     ax.plot(t, xTe[3,:], linestyle='-', color='#0000ff', label=fr'Estimated Target $x^e$')
 
@@ -241,7 +241,7 @@ def PlotDroneReference(t: np.ndarray, data: list) -> plt.Figure:
 
     ax = fig.add_subplot(2, 2, 2)
     
-    ax.plot(t, x[4,:], linestyle='-', color='#ff0000', label=fr'Drone $y$')
+    ax.plot(t, x[4,:], linestyle='-', color='#ff0000', label=fr'Quadrotor $y$')
     ax.plot(t, x0[4,:], linestyle='-', color='#00aa00', label=fr'Reference $y$')
     ax.plot(t, xTe[4,:], linestyle='-', color='#0000ff', label=fr'Estimated Target $y^e$')
 
@@ -257,7 +257,7 @@ def PlotDroneReference(t: np.ndarray, data: list) -> plt.Figure:
 
     ax = fig.add_subplot(2, 2, 3)
     
-    ax.plot(t, x[5,:], linestyle='-', color='#ff0000', label=fr'Drone $z$')
+    ax.plot(t, x[5,:], linestyle='-', color='#ff0000', label=fr'Quadrotor $z$')
     ax.plot(t, x0[5,:], linestyle='-', color='#00aa00', label=fr'Reference $z$')
     ax.plot(t, xTe[5,:], linestyle='-', color='#0000ff', label=fr'Estimated Target $z^e$')
 
@@ -273,7 +273,7 @@ def PlotDroneReference(t: np.ndarray, data: list) -> plt.Figure:
 
     ax = fig.add_subplot(2, 2, 4)
     
-    ax.plot(t, x[2,:], linestyle='-', color='#ff0000', label=fr'Drone $\psi$')
+    ax.plot(t, x[2,:], linestyle='-', color='#ff0000', label=fr'Quadrotor $\psi$')
     ax.plot(t, x0[2,:], linestyle='-', color='#00aa00', label=fr'Reference $\psi$')
 
     if xTe_nanbins: # if estimated nan bins
